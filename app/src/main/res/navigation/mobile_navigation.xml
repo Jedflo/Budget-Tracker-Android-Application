@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@id/navigation_dashboard">
+
+    <fragment
+        android:id="@+id/navigation_home"
+        android:name="com.example.budgettracker.ui.home.HomeFragment"
+        android:label="Savings"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/navigation_dashboard"
+        android:name="com.example.budgettracker.ui.dashboard.DashboardFragment"
+        android:label="Wallets"
+        tools:layout="@layout/fragment_dashboard" >
+        <action
+            android:id="@+id/action_nav_to_savings"
+            app:destination="@id/navigation_home"
+            app:launchSingleTop="true"
+            app:popUpTo="@id/mobile_navigation"
+            app:popUpToInclusive="true"/>
+        <action
+            android:id="@+id/action_nav_to_debts"
+            app:destination="@id/navigation_notifications"
+            app:launchSingleTop="true"
+            app:popUpTo="@id/mobile_navigation"
+            app:popUpToInclusive="true"/>
+
+
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/navigation_notifications"
+        android:name="com.example.budgettracker.ui.notifications.NotificationsFragment"
+        android:label="Debts"
+        tools:layout="@layout/fragment_notifications" />
+
+    <fragment
+        android:id="@+id/startFragment"
+        android:name="com.example.budgettracker.ui.start.StartFragment"
+        android:label="fragment_start"
+        tools:layout="@layout/fragment_start"
+    />
+
+
+</navigation>
