@@ -1,16 +1,17 @@
 package com.example.budgettracker
 
-import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
-import android.widget.Adapter
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.EditText
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.addCallback
+import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.budgettracker.ui.dashboard.WalletAdapter
@@ -19,6 +20,7 @@ import com.example.budgettracker.ui.home.SavingsAdapter
 import com.example.budgettracker.ui.home.SavingsModel
 import com.example.budgettracker.ui.notifications.DebtAdapter
 import com.example.budgettracker.ui.notifications.DebtModel
+import java.math.BigDecimal
 
 class GeneralTransferActivity : AppCompatActivity() {
     private lateinit var walletAdapter: WalletAdapter
@@ -31,12 +33,20 @@ class GeneralTransferActivity : AppCompatActivity() {
     private lateinit var debtRecyclerView: RecyclerView
     private lateinit var debtList: ArrayList<DebtModel>
     private lateinit var tvTransferFromSelectedItemName: TextView
-    private var selectedItemObjectId:String? = null;
-    private var selectedItemFinancialObjectType: String? = null;
+    private lateinit var tvTransferToSelectedItemName: TextView
+    private lateinit var bTransfer: Button
+    private var selectedItemObjectNameFrom:String? = null;
+    private var selectedItemObjectIdFrom:String? = null;
+    private var selectedItemFinancialObjectTypeFrom: String? = null;
+    private var selectedItemObjectNameTo:String? = null;
+    private var selectedItemObjectIdTo:String? = null;
+    private var selectedItemFinancialObjectTypeTo: String? = null;
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_general_transfer)
+        bTransfer= findViewById<Button>(R.id.bTransfer)
         //For when back gesture or button is triggered will return to MainWalletActivity
         val callback = onBackPressedDispatcher.addCallback(this) {
             setResult(RESULT_OK)
@@ -44,28 +54,41 @@ class GeneralTransferActivity : AppCompatActivity() {
         }
 
         tvTransferFromSelectedItemName = findViewById<TextView>(R.id.tvTransferFromSelectedName)
+        tvTransferToSelectedItemName = findViewById<TextView>(R.id.tvTransferToSelectedName)
 
         //Fetch spinner options.
         val financialObjectTypes = resources.getStringArray(R.array.FinancialObjectTypes)
         val fromSpinner = findViewById<Spinner>(R.id.spTransferFrom)
         val fromRecyclerView = findViewById<RecyclerView>(R.id.rvTransferFrom)
+        val toSpinner = findViewById<Spinner>(R.id.spTransferTo)
+        val toRecyclerView = findViewById<RecyclerView>(R.id.rvTransferTo)
 
         //Fetch intent from activity
         val bundle: Bundle? = intent.extras
         val requestFrom = bundle!!.getString(Constants.INTENT_KEY_RQST_FR)
-        selectedItemFinancialObjectType = requestFrom
+        selectedItemFinancialObjectTypeFrom = requestFrom
 
         if (bundle!!.getString("wallet id") != null){
-            selectedItemObjectId = bundle!!.getString("wallet id")
-            tvTransferFromSelectedItemName.text = getWalletFromId(selectedItemObjectId)?.name
+            selectedItemObjectIdFrom = bundle!!.getString("wallet id")
+            selectedItemObjectNameFrom = getWalletFromId(selectedItemObjectIdFrom)?.name
+            selectedItemFinancialObjectTypeFrom = Constants.WLLT_TYPE
+            tvTransferFromSelectedItemName.text = selectedItemObjectNameFrom
+            tvTransferFromSelectedItemName.setBackgroundResource(R.color.wallet_item_blue)
+
         }
         else if (bundle!!.getString("id") != null){
-            selectedItemObjectId = bundle!!.getString("id")
-            tvTransferFromSelectedItemName.text = getSavingsFromId(selectedItemObjectId)?.name
+            selectedItemObjectIdFrom = bundle!!.getString("id")
+            selectedItemObjectNameFrom = getSavingsFromId(selectedItemObjectIdFrom)?.name
+            selectedItemFinancialObjectTypeFrom = Constants.SVNG_TYPE
+            tvTransferFromSelectedItemName.text = selectedItemObjectNameFrom
+            tvTransferFromSelectedItemName.setBackgroundResource(R.color.savings_item_green)
         }
         else if (bundle!!.getString("debtId") != null){
-            selectedItemObjectId = bundle!!.getString("debtId")
-            tvTransferFromSelectedItemName.text = getDebtFromId(selectedItemObjectId)?.name
+            selectedItemObjectIdFrom = bundle!!.getString("debtId")
+            selectedItemObjectNameFrom = getDebtFromId(selectedItemObjectIdFrom)?.name
+            selectedItemFinancialObjectTypeFrom = Constants.DEBT_TYPE
+            tvTransferFromSelectedItemName.text = selectedItemObjectNameFrom
+            tvTransferFromSelectedItemName.setBackgroundResource(R.color.debt_item_yellow)
         }
 
 
@@ -96,17 +119,29 @@ class GeneralTransferActivity : AppCompatActivity() {
                     if (financialObjectTypes[position].equals(
                             Constants.INTENT_VAL_RQST_FR_SAVINGS
                         )){
-                        populateRecyclerViewWithSavings(fromRecyclerView)
+                        populateRecyclerViewWithSavings(
+                            fromRecyclerView,
+                            tvTransferFromSelectedItemName,
+                            Constants.TRANSFER_FROM
+                        )
                     }
                     else if (financialObjectTypes[position].equals(
                             Constants.INTENT_VAL_RQST_FR_WALLET
                         )){
-                        populateRecyclerViewWithWallets(fromRecyclerView)
+                        populateRecyclerViewWithWallets(
+                            fromRecyclerView,
+                            tvTransferFromSelectedItemName,
+                            Constants.TRANSFER_FROM
+                        )
 
                     }else if (financialObjectTypes[position].equals(
                             Constants.INTENT_VAL_RQST_FR_DEBT
                         )){
-                        populateRecyclerViewWithDebt(fromRecyclerView)
+                        populateRecyclerViewWithDebt(
+                            fromRecyclerView,
+                            tvTransferFromSelectedItemName,
+                            Constants.TRANSFER_FROM
+                        )
                     }
                 } //onItemSelected
 
@@ -115,6 +150,99 @@ class GeneralTransferActivity : AppCompatActivity() {
                 }
             }
         }
+
+        if (toSpinner != null) {
+            val adapter = ArrayAdapter(
+                this,
+                android.R.layout.simple_spinner_dropdown_item,
+                financialObjectTypes
+            )
+            toSpinner.adapter = adapter
+
+            toSpinner.onItemSelectedListener = object :
+            AdapterView.OnItemSelectedListener{
+                override fun onItemSelected(
+                    parent: AdapterView<*>,
+                    view: View,
+                    position: Int,
+                    id: Long
+                ) {
+                    if (financialObjectTypes[position].equals(
+                            Constants.INTENT_VAL_RQST_FR_SAVINGS
+                        )){
+                        populateRecyclerViewWithSavings(
+                            toRecyclerView,
+                            tvTransferToSelectedItemName,
+                            Constants.TRANSFER_TO
+                        )
+                    }
+                    else if (financialObjectTypes[position].equals(
+                            Constants.INTENT_VAL_RQST_FR_WALLET
+                        )){
+                        populateRecyclerViewWithWallets(
+                            toRecyclerView,
+                            tvTransferToSelectedItemName,
+                            Constants.TRANSFER_TO
+                        )
+
+                    }else if (financialObjectTypes[position].equals(
+                            Constants.INTENT_VAL_RQST_FR_DEBT
+                        )){
+                        populateRecyclerViewWithDebt(
+                            toRecyclerView,
+                            tvTransferToSelectedItemName,
+                            Constants.TRANSFER_TO
+                        )
+                    }
+                } //onItemSelected
+
+                override fun onNothingSelected(parent: AdapterView<*>?) {
+                    bTransfer.isEnabled = false
+                }
+            }
+        }
+
+        val etTransferTransactionName = findViewById<EditText>(R.id.etTransferTransactionLabel)
+        val etTransferTransactionAmount = findViewById<EditText>(R.id.etTransferTRansactionAmount)
+        val alertDialogBuilder = AlertDialog.Builder(this)
+
+        bTransfer.setOnClickListener {
+            val transferTransactionName = etTransferTransactionName.text.toString()
+            val transferTransactionAmountString = etTransferTransactionAmount.text.toString()
+            val transferTransactionAmount = BigDecimal(transferTransactionAmountString)
+
+            //Alert Dialog
+            alertDialogBuilder.setTitle("Confirm Transfer")
+            alertDialogBuilder.setMessage(
+                "Transfer $transferTransactionAmountString " +
+                        "From $selectedItemObjectNameFrom : $selectedItemObjectIdFrom To " +
+                        "$selectedItemObjectNameTo : $selectedItemObjectIdTo"
+            )
+
+            alertDialogBuilder.setPositiveButton("Cancel"){ dialog, which -> dialog.dismiss() }
+
+            alertDialogBuilder.setNegativeButton("Transfer"){ dialog, which ->
+                //Creating a subtract FT for financial object where the transfer will be coming from
+                createFinancialTransactionForFinancialObject(
+                    selectedItemObjectIdFrom,
+                    selectedItemFinancialObjectTypeFrom,
+                    "[To $selectedItemObjectNameTo] " + transferTransactionName,
+                    transferTransactionAmount.negate()
+                )
+                //Creating an add FT for financial object which is the recipient of the transfer.
+                createFinancialTransactionForFinancialObject(
+                    selectedItemObjectIdTo,
+                    selectedItemFinancialObjectTypeTo,
+                    "[Fr $selectedItemObjectNameFrom] " + transferTransactionName,
+                    transferTransactionAmount
+                )
+                setResult(RESULT_OK)
+                finish()
+            }
+
+            alertDialogBuilder.show()
+        }
+
 
     }
 
@@ -142,7 +270,9 @@ class GeneralTransferActivity : AppCompatActivity() {
 
     }
 
-    private fun populateRecyclerViewWithWallets(recyclerView: RecyclerView){
+    private fun populateRecyclerViewWithWallets(recyclerView: RecyclerView,
+                                                affectedTextView: TextView,
+                                                toOrFromMode:Int){
         //Initialize wallets data in wallets list
         initializeWalletData()
 
@@ -162,9 +292,21 @@ class GeneralTransferActivity : AppCompatActivity() {
         walletAdapter.setOnItemClickListener(object: WalletAdapter.onItemClickListener{
             override fun onItemClick(position: Int) {
                 val selectedItem = walletList[position]
-                tvTransferFromSelectedItemName.text = selectedItem.walletName
-                selectedItemObjectId = selectedItem.walletId
-                selectedItemFinancialObjectType = Constants.WLLT_TYPE
+                affectedTextView.text = selectedItem.walletName
+                affectedTextView.setBackgroundResource(R.color.wallet_item_blue)
+                if (toOrFromMode == Constants.TRANSFER_FROM){
+                    selectedItemObjectNameFrom = selectedItem.walletName
+                    selectedItemObjectIdFrom = selectedItem.walletId
+                    selectedItemFinancialObjectTypeFrom = Constants.WLLT_TYPE
+                    disableTransferButtonIfFromAndToSame()
+                }
+                else if (toOrFromMode == Constants.TRANSFER_TO){
+                    selectedItemObjectNameTo = selectedItem.walletName
+                    selectedItemObjectIdTo = selectedItem.walletId
+                    selectedItemFinancialObjectTypeTo = Constants.WLLT_TYPE
+                    disableTransferButtonIfFromAndToSame()
+                }
+
             }
         })
     }
@@ -192,7 +334,9 @@ class GeneralTransferActivity : AppCompatActivity() {
         }
     }
 
-    private fun populateRecyclerViewWithSavings(recyclerView: RecyclerView){
+    private fun populateRecyclerViewWithSavings(recyclerView: RecyclerView,
+                                                affectedTextView: TextView,
+                                                toOrFromMode: Int){
         initializeSavingsData()
 
         //Get layout manager.
@@ -211,9 +355,21 @@ class GeneralTransferActivity : AppCompatActivity() {
         savingsAdapter.setOnItemClickListener(object : SavingsAdapter.onItemClickListener{
             override fun onItemClick(position: Int) {
                 val selectedItem = savingsList[position]
-                tvTransferFromSelectedItemName.text = selectedItem.savingsName
-                selectedItemObjectId = selectedItem.savingsId
-                selectedItemFinancialObjectType = Constants.SVNG_TYPE
+                affectedTextView.text = selectedItem.savingsName
+                affectedTextView.setBackgroundResource(R.color.savings_item_green)
+                if (toOrFromMode == Constants.TRANSFER_FROM) {
+                    selectedItemObjectNameFrom = selectedItem.savingsName
+                    selectedItemObjectIdFrom = selectedItem.savingsId
+                    selectedItemFinancialObjectTypeFrom = Constants.SVNG_TYPE
+                    disableTransferButtonIfFromAndToSame()
+                }
+                else if(toOrFromMode == Constants.TRANSFER_TO){
+                    selectedItemObjectNameTo = selectedItem.savingsName
+                    selectedItemObjectIdTo = selectedItem.savingsId
+                    selectedItemFinancialObjectTypeTo = Constants.SVNG_TYPE
+                    disableTransferButtonIfFromAndToSame()
+                }
+
             }
         })
     }
@@ -240,7 +396,9 @@ class GeneralTransferActivity : AppCompatActivity() {
         }
     }
 
-    private fun populateRecyclerViewWithDebt(recyclerView: RecyclerView){
+    private fun populateRecyclerViewWithDebt(recyclerView: RecyclerView,
+                                             affectedTextView: TextView,
+                                             toOrFromMode: Int){
         initializeDebtData()
 
         //Get layout manager
@@ -259,9 +417,20 @@ class GeneralTransferActivity : AppCompatActivity() {
         debtAdapter.setOnItemClickListener(object : DebtAdapter.onItemClickListener{
             override fun onItemClick(position: Int) {
                 val selectedItem = debtList[position]
-                tvTransferFromSelectedItemName.text = selectedItem.DebtName
-                selectedItemObjectId = selectedItem.DebtId
-                selectedItemFinancialObjectType = Constants.DEBT_TYPE
+                affectedTextView.text = selectedItem.DebtName
+                affectedTextView.setBackgroundResource(R.color.debt_item_yellow)
+                if (toOrFromMode == Constants.TRANSFER_FROM) {
+                    selectedItemObjectNameFrom = selectedItem.DebtName
+                    selectedItemObjectIdFrom = selectedItem.DebtId
+                    selectedItemFinancialObjectTypeFrom = Constants.DEBT_TYPE
+                    disableTransferButtonIfFromAndToSame()
+                }
+                else if(toOrFromMode == Constants.TRANSFER_TO){
+                    selectedItemObjectNameTo = selectedItem.DebtName
+                    selectedItemObjectIdTo = selectedItem.DebtId
+                    selectedItemFinancialObjectTypeTo = Constants.DEBT_TYPE
+                    disableTransferButtonIfFromAndToSame()
+                }
             }
         })
     }
@@ -275,6 +444,14 @@ class GeneralTransferActivity : AppCompatActivity() {
         return financialObject.childFinancialObjects.get(walletId)
     }
 
+    private fun getWallets(): HashMap<String, FinancialObject>? {
+        val financialObject = FileManager.loadFinancialObject(
+            applicationContext.filesDir.absolutePath,
+            Constants.SAVINGS_FILENAME
+        )
+        return financialObject.childFinancialObjects
+    }
+
     private fun getSavingsFromId(savingsId:String?): FinancialSavings? {
         val financialObject = FileManager.loadFinancialObject(
             applicationContext.filesDir.absolutePath,
@@ -284,16 +461,69 @@ class GeneralTransferActivity : AppCompatActivity() {
         return financialObject.savingsObjects.get(savingsId)
     }
 
+    private fun getSavings(): HashMap<String, FinancialSavings>? {
+        val financialObject = FileManager.loadFinancialObject(
+            applicationContext.filesDir.absolutePath,
+            Constants.SAVINGS_FILENAME
+        )
+        return financialObject.savingsObjects
+    }
+
     private fun getDebtFromId(debtId:String?): FinancialDebt? {
         val financialObject = FileManager.loadFinancialObject(
             applicationContext.filesDir.absolutePath,
             Constants.SAVINGS_FILENAME
         )
-
         return financialObject.debtObjects.get(debtId)
     }
 
+    private fun getDebts(): HashMap<String, FinancialDebt>? {
+        val financialObject = FileManager.loadFinancialObject(
+            applicationContext.filesDir.absolutePath,
+            Constants.SAVINGS_FILENAME
+        )
+        return financialObject.debtObjects
+    }
 
+    private fun disableTransferButtonIfFromAndToSame(){
+        bTransfer.isEnabled = !(
+                        selectedItemObjectIdFrom.isNullOrEmpty() ||
+                        selectedItemObjectIdTo.isNullOrEmpty() ||
+                        selectedItemObjectIdFrom.equals(selectedItemObjectIdTo)
+                )
+    }
+
+    private fun createFinancialTransactionForFinancialObject(
+        financialObjectId: String?,
+        financialObjectType: String?,
+        transactionName: String,
+        amount: BigDecimal) {
+        val financialEntity = FileManager.loadFinancialObject(
+            applicationContext.filesDir.absolutePath,
+            Constants.SAVINGS_FILENAME
+        )
+
+        if (financialObjectType.equals(Constants.SVNG_TYPE)){
+            val savings = financialEntity.savingsObjects.get(financialObjectId)
+            savings?.createFinancialTransaction(transactionName, "", amount)
+
+        }
+        else if (financialObjectType.equals(Constants.WLLT_TYPE)){
+            val wallet = financialEntity.childFinancialObjects.get(financialObjectId)
+            wallet?.createFinancialTransaction(transactionName, "", amount)
+        }
+        else if (financialObjectType.equals(Constants.DEBT_TYPE)) {
+            val debt = financialEntity.debtObjects.get(financialObjectId)
+            debt?.createFinancialTransaction(transactionName, "", amount)
+        }
+
+        FileManager.saveFinancialObject(
+            financialEntity,
+            applicationContext.filesDir.absolutePath,
+            Constants.SAVINGS_FILENAME
+        )
+
+    }
 
 
 

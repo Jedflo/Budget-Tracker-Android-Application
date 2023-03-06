@@ -24,11 +24,11 @@
 
             <TextView
                 android:id="@+id/tvFtdAmount"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:layout_marginEnd="10dp"
-                android:text="FT AMOUNT"
+                android:text="000,000,000.00"
                 android:textAlignment="textEnd"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.5"
@@ -37,11 +37,11 @@
 
             <TextView
                 android:id="@+id/tvFtdTransactionDate"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
                 android:layout_marginTop="10dp"
-                android:text="FT TRANSAC DATE"
+                android:text="00/00/0000"
                 android:textAlignment="textStart"
                 app:layout_constraintEnd_toStartOf="@+id/tvFtdName"
                 app:layout_constraintHorizontal_bias="0.5"

@@ -39,11 +39,11 @@
 
             <TextView
                 android:id="@+id/tvFtsAmount"
-                android:layout_width="0dp"
+                android:layout_width="100dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:layout_marginEnd="10dp"
-                android:text="FTAMT"
+                android:text="000,000,000.00"
                 android:textAlignment="textEnd"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.5"
@@ -52,11 +52,11 @@
 
             <TextView
                 android:id="@+id/tvFtsTransacDate"
-                android:layout_width="0dp"
+                android:layout_width="80dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
                 android:layout_marginTop="10dp"
-                android:text="Transac date"
+                android:text="00/00/0000"
                 android:textAlignment="textStart"
                 app:layout_constraintEnd_toStartOf="@+id/tvFtsName"
                 app:layout_constraintHorizontal_bias="0.5"

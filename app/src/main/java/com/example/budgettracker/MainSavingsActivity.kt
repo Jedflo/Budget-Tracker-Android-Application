@@ -133,6 +133,15 @@ class MainSavingsActivity : AppCompatActivity() {
             activityResultLauncher.launch(intent)
         }
 
+        //Button for transfer
+        val bTranferFromSavings = findViewById<Button>(R.id.bTransferTransactionMs)
+        bTranferFromSavings.setOnClickListener {
+            val intent = Intent(this, GeneralTransferActivity::class.java)
+            intent.putExtra("id", id)
+            intent.putExtra(Constants.INTENT_KEY_RQST_FR, Constants.INTENT_VAL_RQST_FR_SAVINGS)
+            activityResultLauncher.launch(intent)
+        }
+
         //Back Button
         val bBackToSavingsHome = findViewById<Button>(R.id.bBackSavings)
         bBackToSavingsHome.setOnClickListener {

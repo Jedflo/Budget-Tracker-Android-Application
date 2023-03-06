@@ -18,5 +18,7 @@ public class Constants {
     public static final String SVNG_TYPE = "Savings";
     public static final String DEBT_TYPE = "Debt";
     public static final String WLLT_TYPE = "Wallet";
+    public static final int TRANSFER_FROM = 0;
+    public static final int TRANSFER_TO = 1;
 
 }
