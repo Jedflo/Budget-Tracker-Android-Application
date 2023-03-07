@@ -207,16 +207,77 @@ class GeneralTransferActivity : AppCompatActivity() {
         val alertDialogBuilder = AlertDialog.Builder(this)
 
         bTransfer.setOnClickListener {
+            alertDialogBuilder.setTitle("Missing Information")
+            alertDialogBuilder.setPositiveButton("Ok"){ dialog, which -> dialog.dismiss() }
+
+
+            if (etTransferTransactionName.text.toString().isNullOrBlank()){
+                alertDialogBuilder.setMessage("Transaction name cannot be blank")
+                alertDialogBuilder.show()
+                return@setOnClickListener
+            }
+
+            if (etTransferTransactionAmount.text.toString().isNullOrBlank()){
+                alertDialogBuilder.setMessage("Transaction amount cannot be blank")
+                alertDialogBuilder.show()
+                return@setOnClickListener
+            }
+
             val transferTransactionName = etTransferTransactionName.text.toString()
             val transferTransactionAmountString = etTransferTransactionAmount.text.toString()
             val transferTransactionAmount = BigDecimal(transferTransactionAmountString)
+            var objectFinancialTransactionTotal:BigDecimal? = BigDecimal(0)
 
-            //Alert Dialog
+
+
+            //Get the financial object's total.
+            if (selectedItemFinancialObjectTypeFrom.equals(Constants.SVNG_TYPE)){
+                objectFinancialTransactionTotal = getSavingsFromId(
+                    selectedItemObjectIdFrom
+                )?.financialTransactionsTotal
+            }
+            else if(selectedItemFinancialObjectTypeFrom.equals(Constants.WLLT_TYPE)){
+                objectFinancialTransactionTotal = getWalletFromId(
+                    selectedItemObjectIdFrom
+                )?.financialTransactionsTotal
+            }
+            else if(selectedItemFinancialObjectTypeFrom.equals(Constants.DEBT_TYPE)){
+                objectFinancialTransactionTotal = getDebtFromId(
+                    selectedItemObjectIdFrom
+                )?.financialTransactionsTotal
+            }
+
+            //Check if financial object total > transfer amount.
+            try {
+                BigDecimalTools.safeSubtract(
+                    objectFinancialTransactionTotal,
+                    transferTransactionAmount
+                )
+            } catch (e: ArithmeticException){
+                val financialObjTotal = BigDecimalTools.prepareForPrint(
+                    objectFinancialTransactionTotal
+                )
+                val transferTransacAmount = BigDecimalTools.prepareForPrint(
+                    transferTransactionAmount
+                )
+                alertDialogBuilder.setTitle("Error")
+                alertDialogBuilder.setMessage(
+                    "$selectedItemObjectNameFrom total is $financialObjTotal. Cannot " +
+                            "take $transferTransacAmount from it. "
+                )
+                alertDialogBuilder.show()
+                return@setOnClickListener
+            }
+
+
+
+
+            //Alert dialog for transfer.
             alertDialogBuilder.setTitle("Confirm Transfer")
             alertDialogBuilder.setMessage(
                 "Transfer $transferTransactionAmountString " +
-                        "From $selectedItemObjectNameFrom : $selectedItemObjectIdFrom To " +
-                        "$selectedItemObjectNameTo : $selectedItemObjectIdTo"
+                        "From $selectedItemObjectNameFrom To " +
+                        "$selectedItemObjectNameTo ?"
             )
 
             alertDialogBuilder.setPositiveButton("Cancel"){ dialog, which -> dialog.dismiss() }
