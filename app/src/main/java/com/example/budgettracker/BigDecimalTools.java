@@ -13,21 +13,55 @@ public class BigDecimalTools {
         return (bigDecimal.compareTo(BigDecimal.ZERO)>0) ? true : false;
     }
 
+    /**
+     * Converts big decimals into string with provided pattern.
+     * @param bigDecimal Big decimal to be converted to string.
+     * @param format String pattern of big decimal.
+     * @return
+     */
+    public static String prepareForPrint(BigDecimal bigDecimal, String format){
+        DecimalFormat df = new DecimalFormat(format);
+        return df.format(bigDecimal);
+    }
+
+    /**
+     * Converts big decimals into string in #,##0.00 pattern.
+     * @param bigDecimal big decimal to be converted to string.
+     * @return
+     */
     public static String prepareForPrint(BigDecimal bigDecimal){
         DecimalFormat df = new DecimalFormat("#,##0.00");
         return df.format(bigDecimal);
     }
 
+    /**
+     * Converts big decimals to string with pattern ###0.00 pattern.
+     * @param bigDecimal
+     * @return
+     */
     public static String prepareForPrintNC(BigDecimal bigDecimal){
         DecimalFormat df = new DecimalFormat("###0.00");
         return df.format(bigDecimal);
     }
 
-    public static BigDecimal safeSubtract(BigDecimal amount, BigDecimal walletAmount) throws ArithmeticException{
-        amount = amount.subtract(walletAmount);
-        if (BigDecimalTools.isNegative(amount)){
-            throw new ArithmeticException("wallet amount " + BigDecimalTools.prepareForPrint(walletAmount) + " cannot be greater than salary amount " + BigDecimalTools.prepareForPrint(amount.add(walletAmount)));
+    /**
+     * Safely subtracts two big decimals
+     * i.e., It throws an ArithmeticException when the result is negative.
+     * @param bigger
+     * @param smaller
+     * @return
+     * @throws ArithmeticException
+     */
+    public static BigDecimal safeSubtract(BigDecimal bigger, BigDecimal smaller)
+            throws ArithmeticException{
+        bigger = bigger.subtract(smaller);
+        if (BigDecimalTools.isNegative(bigger)){
+            throw new ArithmeticException(
+                    "smaller amount " + BigDecimalTools.prepareForPrint(smaller) +
+                            " cannot be greater than bigger amount " +
+                            BigDecimalTools.prepareForPrint(bigger.add(smaller))
+            );
         }
-        return amount;
+        return bigger;
     }
 }
