@@ -66,7 +66,7 @@ class WalletCreateTransactionActivity : AppCompatActivity() {
             if(wallet==null){
                 Toast.makeText(
                     this,
-                    "An Error Occurred: wallet ID: " + walletId + " Does" + " Not Exist",
+                    "An Error Occurred: wallet ID: $walletId Does Not Exist",
                     Toast.LENGTH_SHORT
                 ).show()
                 return@setOnClickListener

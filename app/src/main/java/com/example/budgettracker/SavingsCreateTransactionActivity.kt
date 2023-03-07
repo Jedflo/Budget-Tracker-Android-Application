@@ -13,6 +13,15 @@ class SavingsCreateTransactionActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_savings_create_transaction)
 
+        //Get transaction type data and where to link the transaction from intent
+        val bundle : Bundle? = intent.extras
+        val transactionType = bundle!!.getString("transaction type")
+        val savingsId = bundle!!.getString("id")
+
+        val title = if (transactionType.equals("add")) "Add Transaction"
+        else "Subtract Transaction"
+        setTitle(title)
+
         val etSavingsTransactionName = findViewById<EditText>(R.id.etSavingsTransactionName)
         val etSavingsTransactionAmount = findViewById<EditText>(R.id.etSavingsTransactionAmount)
         val bSavingsCreateTransaction = findViewById<Button>(R.id.bSavingsCreateTransaction)
@@ -21,11 +30,6 @@ class SavingsCreateTransactionActivity : AppCompatActivity() {
             //Get new savings transaction data from edit texts
             val transactionName: String = etSavingsTransactionName.text.toString()
             val transactionAmount: BigDecimal = BigDecimal(etSavingsTransactionAmount.text.toString())
-
-            //Get transaction type data and where to link the transaction from intent
-            val bundle : Bundle? = intent.extras
-            val transactionType = bundle!!.getString("transaction type")
-            val savingsId = bundle!!.getString("id")
 
             //Retrieve the financial savings object where the new to be created transaction will be linked to.
             val fo: FinancialObject = FileManager.loadFinancialObject(applicationContext.filesDir.absolutePath,Constants.SAVINGS_FILENAME)
@@ -80,12 +84,6 @@ class SavingsCreateTransactionActivity : AppCompatActivity() {
                     Constants.SAVINGS_FILENAME
                 )
             }
-//
-//            val intent = Intent(this, MainSavingsActivity::class.java)
-//            intent.putExtra("id", savingsId)
-//            intent.putExtra("amount", userSavings.financialTransactionsTotal) //BigDecimal, must fetch as BD and convert to string in next activity.
-//            startActivity(intent)
-//            finish()
             val intent = Intent()
             intent.putExtra("id", savingsId)
             setResult(RESULT_OK, intent)
