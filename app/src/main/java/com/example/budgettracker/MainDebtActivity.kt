@@ -110,10 +110,13 @@ class MainDebtActivity : AppCompatActivity() {
 
         val bAddDebtTransaction = findViewById<Button>(R.id.bAddTransactionMd)
         val bSubDebtTransaction = findViewById<Button>(R.id.bSubTransactionMd)
+        val bTranferFromSavings = findViewById<Button>(R.id.bTransferTransactionMd)
         val intent = Intent(this, DebtCreateTransactionActivity::class.java)
 
         val debtPayTotal = financialDebt.financialTransactionsTotal
-        bSubDebtTransaction.isEnabled = debtPayTotal?.compareTo(BigDecimal.ZERO)!! >0
+        val isButtonsEnabled = debtPayTotal?.compareTo(BigDecimal.ZERO)!! >0
+        bSubDebtTransaction.isEnabled = isButtonsEnabled
+        bTranferFromSavings.isEnabled = isButtonsEnabled
 
         //Button for adding to debt
         bAddDebtTransaction.setOnClickListener {
@@ -137,7 +140,6 @@ class MainDebtActivity : AppCompatActivity() {
         }
 
         //Button for transfer
-        val bTranferFromSavings = findViewById<Button>(R.id.bTransferTransactionMd)
         bTranferFromSavings.setOnClickListener {
             val intent = Intent(this, GeneralTransferActivity::class.java)
             intent.putExtra("debtId", debtId)

@@ -106,10 +106,13 @@ class MainSavingsActivity : AppCompatActivity() {
 
         val bAddSavingsTransaction = findViewById<Button>(R.id.bAddTransactionMs)
         val bSubSavingsTransaction = findViewById<Button>(R.id.bSubtractTransactionMs)
+        val bTranferFromSavings = findViewById<Button>(R.id.bTransferTransactionMs)
         val intent = Intent(this, SavingsCreateTransactionActivity::class.java)
 
         val savingsTotal = financialSavings.financialTransactionsTotal
-        bSubSavingsTransaction.isEnabled = savingsTotal?.compareTo(BigDecimal.ZERO)!!>0
+        val isButtonsEnabled = savingsTotal?.compareTo(BigDecimal.ZERO)!!>0
+        bSubSavingsTransaction.isEnabled = isButtonsEnabled
+        bTranferFromSavings.isEnabled = isButtonsEnabled
 
         //Button for adding to savings.
         bAddSavingsTransaction.setOnClickListener {
@@ -134,7 +137,7 @@ class MainSavingsActivity : AppCompatActivity() {
         }
 
         //Button for transfer
-        val bTranferFromSavings = findViewById<Button>(R.id.bTransferTransactionMs)
+
         bTranferFromSavings.setOnClickListener {
             val intent = Intent(this, GeneralTransferActivity::class.java)
             intent.putExtra("id", id)

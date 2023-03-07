@@ -94,9 +94,13 @@ class MainWalletActivity : AppCompatActivity() {
         //Get add and subtract buttons from layout
         val bAddWalletTransaction = findViewById<Button>(R.id.bAddTransactionWallet)
         val bSubWalletTransaction = findViewById<Button>(R.id.bSubTransactionWallet)
+        val bTranferFromWallet = findViewById<Button>(R.id.bTransferTransactionWallet)
         //Check if wallet balance is >0, if it is, enable subtract button, else leave disabled.
         val walletTotal = wallet?.financialTransactionsTotal
-        bSubWalletTransaction.isEnabled = walletTotal?.compareTo(BigDecimal.ZERO)!! >0
+        val isButtonsEnabled = walletTotal?.compareTo(BigDecimal.ZERO)!! >0
+        bSubWalletTransaction.isEnabled = isButtonsEnabled
+        bTranferFromWallet.isEnabled = isButtonsEnabled
+
 
         val intent = Intent(this, WalletCreateTransactionActivity::class.java)
 
@@ -123,7 +127,7 @@ class MainWalletActivity : AppCompatActivity() {
         }
 
         //Button for transfer
-        val bTranferFromWallet = findViewById<Button>(R.id.bTransferTransactionWallet)
+
         bTranferFromWallet.setOnClickListener {
             val intent = Intent(this, GeneralTransferActivity::class.java)
             intent.putExtra("wallet id", walletId)
