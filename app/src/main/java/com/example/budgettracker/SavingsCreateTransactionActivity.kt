@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
 import java.math.BigDecimal
 
@@ -12,6 +13,12 @@ class SavingsCreateTransactionActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_savings_create_transaction)
+
+        //For when back gesture or button is triggered will return to Main[financial obj]Activity
+        val callback = onBackPressedDispatcher.addCallback(this) {
+            setResult(RESULT_OK)
+            finish()
+        }
 
         //Get transaction type data and where to link the transaction from intent
         val bundle : Bundle? = intent.extras
