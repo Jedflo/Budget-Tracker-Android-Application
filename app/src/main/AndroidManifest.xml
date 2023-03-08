@@ -49,7 +49,8 @@
         </activity>
         <activity
             android:name=".DebtAddActivity"
-            android:exported="false">
+            android:exported="false"
+            android:label="Create a debt item">
             <meta-data
                 android:name="android.app.lib_name"
                 android:value="" />
@@ -71,7 +72,8 @@
         </activity>
         <activity
             android:name=".WalletAddActivity"
-            android:exported="false">
+            android:exported="false"
+            android:label="Create a wallet item">
             <meta-data
                 android:name="android.app.lib_name"
                 android:value="" />

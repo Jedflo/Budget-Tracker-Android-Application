@@ -1,17 +1,12 @@
 package com.example.budgettracker
 
-import androidx.appcompat.app.AppCompatActivity
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.View
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.EditText
-import android.widget.Spinner
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.budgettracker.ui.dashboard.WalletAdapter
@@ -47,7 +42,7 @@ class GeneralTransferActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_general_transfer)
         bTransfer= findViewById<Button>(R.id.bTransfer)
-        //For when back gesture or button is triggered will return to MainWalletActivity
+        //For when back gesture or button is triggered will return to Main[financial obj]Activity
         val callback = onBackPressedDispatcher.addCallback(this) {
             setResult(RESULT_OK)
             finish()
@@ -73,7 +68,11 @@ class GeneralTransferActivity : AppCompatActivity() {
             selectedItemObjectNameFrom = getWalletFromId(selectedItemObjectIdFrom)?.name
             selectedItemFinancialObjectTypeFrom = Constants.WLLT_TYPE
             tvTransferFromSelectedItemName.text = selectedItemObjectNameFrom
-            tvTransferFromSelectedItemName.setBackgroundResource(R.color.wallet_item_blue)
+            changeTextViewBgColorIfDarkMode(
+                tvTransferFromSelectedItemName,
+                R.color.wallet_item_blue_dark,
+                R.color.wallet_item_blue
+            )
 
         }
         else if (bundle!!.getString("id") != null){
@@ -82,6 +81,11 @@ class GeneralTransferActivity : AppCompatActivity() {
             selectedItemFinancialObjectTypeFrom = Constants.SVNG_TYPE
             tvTransferFromSelectedItemName.text = selectedItemObjectNameFrom
             tvTransferFromSelectedItemName.setBackgroundResource(R.color.savings_item_green)
+            changeTextViewBgColorIfDarkMode(
+                tvTransferFromSelectedItemName,
+                R.color.savings_item_green_dark,
+                R.color.savings_item_green
+            )
         }
         else if (bundle!!.getString("debtId") != null){
             selectedItemObjectIdFrom = bundle!!.getString("debtId")
@@ -89,6 +93,11 @@ class GeneralTransferActivity : AppCompatActivity() {
             selectedItemFinancialObjectTypeFrom = Constants.DEBT_TYPE
             tvTransferFromSelectedItemName.text = selectedItemObjectNameFrom
             tvTransferFromSelectedItemName.setBackgroundResource(R.color.debt_item_yellow)
+            changeTextViewBgColorIfDarkMode(
+                tvTransferFromSelectedItemName,
+                R.color.debt_item_yellow_dark,
+                R.color.debt_item_yellow
+            )
         }
 
 
@@ -354,7 +363,12 @@ class GeneralTransferActivity : AppCompatActivity() {
             override fun onItemClick(position: Int) {
                 val selectedItem = walletList[position]
                 affectedTextView.text = selectedItem.walletName
-                affectedTextView.setBackgroundResource(R.color.wallet_item_blue)
+                changeTextViewBgColorIfDarkMode(
+                    affectedTextView,
+                    R.color.wallet_item_blue_dark,
+                    R.color.wallet_item_blue
+                )
+
                 if (toOrFromMode == Constants.TRANSFER_FROM){
                     selectedItemObjectNameFrom = selectedItem.walletName
                     selectedItemObjectIdFrom = selectedItem.walletId
@@ -417,7 +431,12 @@ class GeneralTransferActivity : AppCompatActivity() {
             override fun onItemClick(position: Int) {
                 val selectedItem = savingsList[position]
                 affectedTextView.text = selectedItem.savingsName
-                affectedTextView.setBackgroundResource(R.color.savings_item_green)
+                changeTextViewBgColorIfDarkMode(
+                    affectedTextView,
+                    R.color.savings_item_green_dark,
+                    R.color.savings_item_green
+                )
+
                 if (toOrFromMode == Constants.TRANSFER_FROM) {
                     selectedItemObjectNameFrom = selectedItem.savingsName
                     selectedItemObjectIdFrom = selectedItem.savingsId
@@ -479,7 +498,12 @@ class GeneralTransferActivity : AppCompatActivity() {
             override fun onItemClick(position: Int) {
                 val selectedItem = debtList[position]
                 affectedTextView.text = selectedItem.DebtName
-                affectedTextView.setBackgroundResource(R.color.debt_item_yellow)
+                changeTextViewBgColorIfDarkMode(
+                    affectedTextView,
+                    R.color.debt_item_yellow_dark,
+                    R.color.debt_item_yellow
+                )
+
                 if (toOrFromMode == Constants.TRANSFER_FROM) {
                     selectedItemObjectNameFrom = selectedItem.DebtName
                     selectedItemObjectIdFrom = selectedItem.DebtId
@@ -584,6 +608,23 @@ class GeneralTransferActivity : AppCompatActivity() {
             Constants.SAVINGS_FILENAME
         )
 
+    }
+
+    /**
+     * Changes the background resource of a given text view depending if the app is in dark mode or not
+     * @param affectedTextView textview whose background will be changed
+     * @param bgDarkResId resource id of color that will be used for dark theme.
+     * @param bgLightResId resource id of color that will be used for light theme.
+     */
+    private fun changeTextViewBgColorIfDarkMode(affectedTextView:TextView, bgDarkResId: Int, bgLightResId: Int){
+        val nightModeFlags: Int = applicationContext.resources.configuration.uiMode and
+                Configuration.UI_MODE_NIGHT_MASK
+        if(nightModeFlags == Configuration.UI_MODE_NIGHT_YES){
+            affectedTextView.setBackgroundResource(bgDarkResId)
+        }
+        else{
+            affectedTextView.setBackgroundResource(bgLightResId)
+        }
     }
 
 

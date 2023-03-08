@@ -12,6 +12,9 @@
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
+        <item name="debtItemColor">@color/debt_item_yellow</item>
+        <item name="savingsItemColor">@color/savings_item_green</item>
+        <item name="walletItemColor">@color/wallet_item_blue</item>
     </style>
     <style name="Theme.BudgetTracker.NoActionBar">
         <item name="windowActionBar">false</item>

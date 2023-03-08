@@ -7,6 +7,7 @@ import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
@@ -17,6 +18,12 @@ class SavingsEditActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_savings_edit)
+
+        //For when back gesture or button is triggered will return to Main[financial obj]Activity
+        val callback = onBackPressedDispatcher.addCallback(this) {
+            setResult(RESULT_OK)
+            finish()
+        }
 
         //Retrieve all views from savings edit layout
         val savingsName = findViewById<EditText>(R.id.etSavingsEditName)

@@ -12,5 +12,8 @@
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
+        <item name="debtItemColor">@color/debt_item_yellow_dark</item>
+        <item name="savingsItemColor">@color/savings_item_green_dark</item>
+        <item name="walletItemColor">@color/wallet_item_blue_dark</item>
     </style>
 </resources>

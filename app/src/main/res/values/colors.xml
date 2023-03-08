@@ -8,6 +8,10 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="wallet_item_blue">#ADE5FF</color>
+    <color name="wallet_item_blue_dark">#005780</color>
     <color name="savings_item_green">#D9FAB3</color>
+    <color name="savings_item_green_dark">#437808</color>
     <color name="debt_item_yellow">#FFF7AF</color>
+    <color name="debt_item_yellow_dark">#807300</color>
+
 </resources>

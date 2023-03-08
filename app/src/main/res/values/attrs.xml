@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Other values-->
+    <attr name="debtItemColor" format="reference"></attr>
+    <attr name="walletItemColor" format="reference"></attr>
+    <attr name="savingsItemColor" format="reference"></attr>
+
+
+</resources>

@@ -10,7 +10,7 @@
         android:layout_marginStart="2dp"
         android:layout_marginEnd="2dp"
         android:layout_marginBottom="5dp"
-        app:cardBackgroundColor="#D9FAB3"
+        app:cardBackgroundColor="?attr/savingsItemColor"
         app:cardCornerRadius="25dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

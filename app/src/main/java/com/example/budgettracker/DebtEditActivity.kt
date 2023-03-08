@@ -3,6 +3,7 @@ package com.example.budgettracker
 import android.content.Intent
 import android.os.Bundle
 import android.widget.*
+import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
@@ -13,6 +14,12 @@ class DebtEditActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_debt_edit)
+
+        //For when back gesture or button is triggered will return to Main[financial obj]Activity
+        val callback = onBackPressedDispatcher.addCallback(this) {
+            setResult(RESULT_OK)
+            finish()
+        }
 
         //Retrieve all views from savings edit layout
         val debtName = findViewById<EditText>(R.id.etDebtEditName)
