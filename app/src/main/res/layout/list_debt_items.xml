@@ -70,6 +70,7 @@
                 android:layout_marginTop="12dp"
                 android:layout_marginBottom="12dp"
                 android:text="Total Payments"
+                android:textStyle="bold"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/tvDebtAmountLabel" />
@@ -81,6 +82,7 @@
                 android:layout_marginStart="27dp"
                 android:layout_marginTop="12dp"
                 android:text="Debt Amount"
+                android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/tvDebtName" />
 
