@@ -1,7 +1,9 @@
 package com.example.budgettracker
 
+import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
+import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
@@ -122,7 +124,10 @@ class SQLiteHelper(context: Context): SQLiteOpenHelper(context, DATABASE_NAME, n
         return success
     }
 
-    //TODO Create Docs
+    /**
+     * Updates the database record of a given financial object.
+     * @param fo financial object to be updated.
+     */
     fun updateFinancialObject(fo: FinancialObjectModel): Int {
         val db =this.writableDatabase
         val contentValues = ContentValues()
@@ -142,6 +147,134 @@ class SQLiteHelper(context: Context): SQLiteOpenHelper(context, DATABASE_NAME, n
         db.close()
         return success
     }
+
+    /**
+     * Deletes the given financial object from the database.
+     * @param fo financial object to be deleted.
+     */
+    fun deleteFinancialObject(fo: FinancialObjectModel): Int{
+        val db = this.writableDatabase
+        var success = db.delete(TBL_FINANCIAL_OBJECT, "$FO_ID = ?", arrayOf(fo.id))
+        success += db.delete(TBL_FINANCIAL_OBJECT_REL, "$FOR_PARENT_ID = ?", arrayOf(fo.id))
+        db.close()
+        return success
+    }
+
+    /**
+     * Fetches all financial objects of a given type from the database.
+     * @param financialObjectType type of financial object to be fetched.
+     * @return an arraylist of FinancialObjectModels of the given financialObjectType.
+     */
+    @SuppressLint("Range")
+    fun getFinancialObjects(financialObjectType: String): ArrayList<FinancialObjectModel>{
+        val financialObjectList: ArrayList<FinancialObjectModel> = ArrayList()
+        val db = this.writableDatabase
+        val selectQuery = "SELECT * FROM $TBL_FINANCIAL_OBJECT WHERE $FO_TYPE = '$financialObjectType'"
+        val cursor: Cursor?
+
+        try {
+            cursor = db.rawQuery(selectQuery,null)
+        }catch (e: java.lang.Exception){
+            e.printStackTrace()
+            db.execSQL(selectQuery)
+            return ArrayList()
+        }
+
+        var id: String
+        var type: String
+        var name: String
+        var description: String
+        var targetAmount: Double
+        var level: String
+
+        if (cursor.moveToFirst()){
+            do {
+                id = cursor.getString(cursor.getColumnIndex(FO_ID))
+                type = cursor.getString(cursor.getColumnIndex(FO_TYPE))
+                name = cursor.getString(cursor.getColumnIndex(FO_NAME))
+                description = cursor.getString(cursor.getColumnIndex(FO_DESC))
+                targetAmount = cursor.getDouble(cursor.getColumnIndex(FO_TARGET_AMT))
+                level = cursor.getString(cursor.getColumnIndex(FO_LEVEL))
+                val financialObject = FinancialObjectModel(
+                    id,
+                    type,
+                    name,
+                    description,
+                    targetAmount,
+                    level
+                )
+                financialObjectList.add(financialObject)
+            }while (cursor.moveToNext())
+        }
+        return financialObjectList
+    }
+
+    /**
+     * Fetches a specific financial object from the database.
+     * @param foID Financial Object ID of financial object to be fetched.
+     * @return FinancialObjectModel with the given FO ID.
+     */
+    @SuppressLint("Range")
+    fun getFinancialObject(foID: String): FinancialObjectModel? {
+        val db = this.writableDatabase
+        val selectQuery = "SELECT * FROM $TBL_FINANCIAL_OBJECT WHERE $FO_ID = '$foID'"
+        val cursor: Cursor?
+
+        try {
+            cursor = db.rawQuery(selectQuery,null)
+            var id: String
+            var type: String
+            var name: String
+            var description: String
+            var targetAmount: Double
+            var level: String
+
+            if (cursor.moveToFirst()) {
+                id = cursor.getString(cursor.getColumnIndex(FO_ID))
+                type = cursor.getString(cursor.getColumnIndex(FO_TYPE))
+                name = cursor.getString(cursor.getColumnIndex(FO_NAME))
+                description = cursor.getString(cursor.getColumnIndex(FO_DESC))
+                targetAmount = cursor.getDouble(cursor.getColumnIndex(FO_TARGET_AMT))
+                level = cursor.getString(cursor.getColumnIndex(FO_LEVEL))
+                return FinancialObjectModel(
+                    id,
+                    type,
+                    name,
+                    description,
+                    targetAmount,
+                    level
+                )
+            }
+        }catch (e: java.lang.Exception){
+            e.printStackTrace()
+            db.execSQL(selectQuery)
+
+        }
+        return null
+    }
+
+    fun insertFinancialObjectTransaction(fot: FinancialObjectTransactionModel): Long{
+        val db = this.writableDatabase
+        val contentValues = ContentValues()
+        contentValues.put(T_ID, fot.id)
+        contentValues.put(T_NAME, fot.name)
+        contentValues.put(T_AMOUNT, fot.amount)
+        contentValues.put(T_FO_OBJECT_ID, fot.objectId)
+        contentValues.put(T_DATE, fot.transactionDate.toString())
+        contentValues.put(T_ATTACHMENT_ID, fot.attachmentId)
+
+        val success = db.insert(TBL_TRANSACTIONS, null, contentValues)
+        db.close()
+        return success
+    }
+
+    fun deleteFinancialObjectTransaction(fot: FinancialObjectTransactionModel): Int{
+        val db = this.writableDatabase
+        val success = db.delete(TBL_TRANSACTIONS, "$T_ID = ?", arrayOf(fot.id))
+        db.close()
+        return success
+    }
+
 
 
 
