@@ -20,7 +20,7 @@ import java.math.BigDecimal
 class GeneralTransferActivity : AppCompatActivity() {
     private lateinit var walletAdapter: WalletAdapter
     private lateinit var walletRecyclerView: RecyclerView
-    private lateinit var walletList: ArrayList<WalletModel>
+    private lateinit var walletList: ArrayList<FinancialObjectModel>
     private lateinit var savingsAdapter: SavingsAdapter
     private lateinit var savingsRecyclerView : RecyclerView
     private lateinit var savingsList : ArrayList<SavingsModel>
@@ -317,25 +317,25 @@ class GeneralTransferActivity : AppCompatActivity() {
     }
 
     private fun initializeWalletData(){
-        walletList = arrayListOf<WalletModel>()
+        walletList = arrayListOf<FinancialObjectModel>()
 
-        val mainFinancialObject: FinancialObject =
-            FileManager.loadFinancialObject(
-                applicationContext.filesDir.absolutePath,
-                Constants.SAVINGS_FILENAME)?: return
-
-        val walletMap: HashMap<String,FinancialObject> = mainFinancialObject.childFinancialObjects
-        val numberFormatter: NumberFormatter = NumberFormatter()
-        for(wallet in walletMap){
-            wallet.key
-            wallet.value
-            val wallet = WalletModel(
-                wallet.key,
-                wallet.value.name,
-                numberFormatter.formatNumber(wallet.value.financialTransactionsTotal)
-            )
-            walletList.add(wallet)
-        }
+//        val mainFinancialObject: FinancialObject =
+//            FileManager.loadFinancialObject(
+//                applicationContext.filesDir.absolutePath,
+//                Constants.SAVINGS_FILENAME)?: return
+//
+//        val walletMap: HashMap<String,FinancialObject> = mainFinancialObject.childFinancialObjects
+//        val numberFormatter: NumberFormatter = NumberFormatter()
+//        for(wallet in walletMap){
+//            wallet.key
+//            wallet.value
+//            val wallet = WalletModel(
+//                wallet.key,
+//                wallet.value.name,
+//                numberFormatter.formatNumber(wallet.value.financialTransactionsTotal)
+//            )
+//            walletList.add(wallet)
+//        }
 
 
     }
@@ -359,31 +359,31 @@ class GeneralTransferActivity : AppCompatActivity() {
         //Populate RecyclerView with data.
         walletRecyclerView.adapter = walletAdapter
         //Set onClickListener on RecyclerView elements
-        walletAdapter.setOnItemClickListener(object: WalletAdapter.onItemClickListener{
-            override fun onItemClick(position: Int) {
-                val selectedItem = walletList[position]
-                affectedTextView.text = selectedItem.walletName
-                changeTextViewBgColorIfDarkMode(
-                    affectedTextView,
-                    R.color.wallet_item_blue_dark,
-                    R.color.wallet_item_blue
-                )
-
-                if (toOrFromMode == Constants.TRANSFER_FROM){
-                    selectedItemObjectNameFrom = selectedItem.walletName
-                    selectedItemObjectIdFrom = selectedItem.walletId
-                    selectedItemFinancialObjectTypeFrom = Constants.WLLT_TYPE
-                    disableTransferButtonIfFromAndToSame()
-                }
-                else if (toOrFromMode == Constants.TRANSFER_TO){
-                    selectedItemObjectNameTo = selectedItem.walletName
-                    selectedItemObjectIdTo = selectedItem.walletId
-                    selectedItemFinancialObjectTypeTo = Constants.WLLT_TYPE
-                    disableTransferButtonIfFromAndToSame()
-                }
-
-            }
-        })
+//        walletAdapter.setOnItemClickListener(object: WalletAdapter.onItemClickListener{
+//            override fun onItemClick(position: Int) {
+//                val selectedItem = walletList[position]
+//                affectedTextView.text = selectedItem.walletName
+//                changeTextViewBgColorIfDarkMode(
+//                    affectedTextView,
+//                    R.color.wallet_item_blue_dark,
+//                    R.color.wallet_item_blue
+//                )
+//
+//                if (toOrFromMode == Constants.TRANSFER_FROM){
+//                    selectedItemObjectNameFrom = selectedItem.walletName
+//                    selectedItemObjectIdFrom = selectedItem.walletId
+//                    selectedItemFinancialObjectTypeFrom = Constants.WLLT_TYPE
+//                    disableTransferButtonIfFromAndToSame()
+//                }
+//                else if (toOrFromMode == Constants.TRANSFER_TO){
+//                    selectedItemObjectNameTo = selectedItem.walletName
+//                    selectedItemObjectIdTo = selectedItem.walletId
+//                    selectedItemFinancialObjectTypeTo = Constants.WLLT_TYPE
+//                    disableTransferButtonIfFromAndToSame()
+//                }
+//
+//            }
+//        })
     }
 
     private fun initializeSavingsData(){

@@ -6,8 +6,6 @@ import android.widget.*
 import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.findNavController
-import androidx.navigation.fragment.NavHostFragment
 import java.math.BigDecimal
 
 class DebtEditActivity : AppCompatActivity() {

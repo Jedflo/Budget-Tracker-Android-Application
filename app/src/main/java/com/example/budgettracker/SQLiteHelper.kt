@@ -6,6 +6,10 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.math.roundToInt
 
 class SQLiteHelper(context: Context): SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
     companion object{
@@ -20,6 +24,7 @@ class SQLiteHelper(context: Context): SQLiteOpenHelper(context, DATABASE_NAME, n
         private const val FO_DESC = "description"
         private const val FO_TARGET_AMT = "target_amount"
         private const val FO_LEVEL = "Level" //Parent or Child
+        private const val FO_CREATION_DATE = "date_created"
 
         //Transactions Table
         private const val TBL_TRANSACTIONS = "transactions"
@@ -39,30 +44,31 @@ class SQLiteHelper(context: Context): SQLiteOpenHelper(context, DATABASE_NAME, n
     override fun onCreate(db: SQLiteDatabase?) {
         val createFinancialObjectsTable = (
                 "CREATE TABLE " + TBL_FINANCIAL_OBJECT + "("
-                        + FO_ID + "TEXT PRIMARY KEY, "
-                        + FO_TYPE + "TEXT, "
-                        + FO_NAME + "TEXT, "
-                        + FO_DESC + "TEXT, "
-                        + FO_TARGET_AMT + "REAL, "
-                        + FO_LEVEL + "TEXT "
+                        + FO_ID + " TEXT PRIMARY KEY, "
+                        + FO_TYPE + " TEXT, "
+                        + FO_NAME + " TEXT, "
+                        + FO_DESC + " TEXT, "
+                        + FO_TARGET_AMT + " REAL, "
+                        + FO_LEVEL + " TEXT, "
+                        + FO_CREATION_DATE + " TEXT "
                         + ")"
                 )
 
         val createTransactionsTable = (
                 "CREATE TABLE " + TBL_TRANSACTIONS + "("
-                        + T_ID + "TEXT PRIMARY KEY, "
-                        + T_NAME + "TEXT, "
-                        + T_AMOUNT + "REAL, "
-                        + T_FO_OBJECT_ID + "TEXT, "
-                        + T_DATE + "TEXT, "
-                        + T_ATTACHMENT_ID + "TEXT "
+                        + T_ID + " TEXT PRIMARY KEY, "
+                        + T_NAME + " TEXT, "
+                        + T_AMOUNT + " REAL, "
+                        + T_FO_OBJECT_ID + " TEXT, "
+                        + T_DATE + " TEXT, "
+                        + T_ATTACHMENT_ID + " TEXT "
                         + ")"
         )
 
         val createFinancialObjectsRelationTable = (
                 "CREATE TABLE " + TBL_FINANCIAL_OBJECT_REL + "("
-                        + FOR_PARENT_ID + "TEXT,"
-                        + FOR_CHILD_ID + "TEXT"
+                        + FOR_PARENT_ID + " TEXT,"
+                        + FOR_CHILD_ID + " TEXT"
                         + ")"
                 )
 
@@ -89,6 +95,7 @@ class SQLiteHelper(context: Context): SQLiteOpenHelper(context, DATABASE_NAME, n
         contentValues.put(FO_DESC, fo.description)
         contentValues.put(FO_TARGET_AMT, fo.targetAmount)
         contentValues.put(FO_LEVEL, fo.level)
+        contentValues.put(FO_CREATION_DATE, CalendarTools.getCalendarFormatForDatabase(fo.dateCreated))
 
         val success = db.insert(TBL_FINANCIAL_OBJECT, null, contentValues)
         db.close()
@@ -111,6 +118,7 @@ class SQLiteHelper(context: Context): SQLiteOpenHelper(context, DATABASE_NAME, n
         contentValues.put(FO_DESC, fo.description)
         contentValues.put(FO_TARGET_AMT, fo.targetAmount)
         contentValues.put(FO_LEVEL, fo.level)
+        contentValues.put(FO_CREATION_DATE, CalendarTools.getCalendarFormatForDatabase(fo.dateCreated))
         var success = db.insert(TBL_FINANCIAL_OBJECT, null, contentValues)
 
         contentValues.clear()
@@ -186,6 +194,9 @@ class SQLiteHelper(context: Context): SQLiteOpenHelper(context, DATABASE_NAME, n
         var description: String
         var targetAmount: Double
         var level: String
+        var value: Double
+        var creationDateString: String
+        var creationDateCalendar: Calendar
 
         if (cursor.moveToFirst()){
             do {
@@ -195,13 +206,18 @@ class SQLiteHelper(context: Context): SQLiteOpenHelper(context, DATABASE_NAME, n
                 description = cursor.getString(cursor.getColumnIndex(FO_DESC))
                 targetAmount = cursor.getDouble(cursor.getColumnIndex(FO_TARGET_AMT))
                 level = cursor.getString(cursor.getColumnIndex(FO_LEVEL))
+                value = getFinancialObjectValue(id)
+                creationDateString = cursor.getString(cursor.getColumnIndex(FO_CREATION_DATE))
+                creationDateCalendar = CalendarTools.stringToCalendarFromDatabase(creationDateString)
                 val financialObject = FinancialObjectModel(
                     id,
                     type,
                     name,
                     description,
                     targetAmount,
-                    level
+                    level,
+                    value,
+                    creationDateCalendar
                 )
                 financialObjectList.add(financialObject)
             }while (cursor.moveToNext())
@@ -228,6 +244,9 @@ class SQLiteHelper(context: Context): SQLiteOpenHelper(context, DATABASE_NAME, n
             var description: String
             var targetAmount: Double
             var level: String
+            var value: Double
+            var creationDateString: String
+            var creationDateCalendar: Calendar
 
             if (cursor.moveToFirst()) {
                 id = cursor.getString(cursor.getColumnIndex(FO_ID))
@@ -236,13 +255,18 @@ class SQLiteHelper(context: Context): SQLiteOpenHelper(context, DATABASE_NAME, n
                 description = cursor.getString(cursor.getColumnIndex(FO_DESC))
                 targetAmount = cursor.getDouble(cursor.getColumnIndex(FO_TARGET_AMT))
                 level = cursor.getString(cursor.getColumnIndex(FO_LEVEL))
+                value = getFinancialObjectValue(id)
+                creationDateString = cursor.getString(cursor.getColumnIndex(FO_CREATION_DATE))
+                creationDateCalendar = CalendarTools.stringToCalendarFromDatabase(creationDateString)
                 return FinancialObjectModel(
                     id,
                     type,
                     name,
                     description,
                     targetAmount,
-                    level
+                    level,
+                    value,
+                    creationDateCalendar
                 )
             }
         }catch (e: java.lang.Exception){
@@ -253,6 +277,24 @@ class SQLiteHelper(context: Context): SQLiteOpenHelper(context, DATABASE_NAME, n
         return null
     }
 
+    fun getFinancialObjectValue(foId: String): Double{
+        val db = this.writableDatabase
+        val selectQuery = "SELECT SUM($T_AMOUNT) FROM $TBL_TRANSACTIONS WHERE $T_FO_OBJECT_ID = '$foId'"
+        val cursor: Cursor?
+        var amount = 0.0
+
+        try {
+            cursor = db.rawQuery(selectQuery,null)
+            if (cursor.moveToFirst()) {
+                amount = cursor.getDouble(0)
+            }
+        }catch (e: java.lang.Exception){
+            e.printStackTrace()
+            db.execSQL(selectQuery)
+        }
+        return roundToTwoPlaces(amount)
+    }
+
     fun insertFinancialObjectTransaction(fot: FinancialObjectTransactionModel): Long{
         val db = this.writableDatabase
         val contentValues = ContentValues()
@@ -260,12 +302,63 @@ class SQLiteHelper(context: Context): SQLiteOpenHelper(context, DATABASE_NAME, n
         contentValues.put(T_NAME, fot.name)
         contentValues.put(T_AMOUNT, fot.amount)
         contentValues.put(T_FO_OBJECT_ID, fot.objectId)
-        contentValues.put(T_DATE, fot.transactionDate.toString())
+        contentValues.put(T_DATE, CalendarTools.getCalendarFormatForDatabase(fot.transactionDate))
         contentValues.put(T_ATTACHMENT_ID, fot.attachmentId)
 
         val success = db.insert(TBL_TRANSACTIONS, null, contentValues)
         db.close()
         return success
+    }
+
+    @SuppressLint("Range")
+    fun getTransactionsOnFinancialObject(foId: String): ArrayList<FinancialObjectTransactionModel>{
+        val transactionsList: ArrayList<FinancialObjectTransactionModel> = ArrayList()
+        val db = this.writableDatabase
+        val selectQuery =
+                    "SELECT * " +
+                    "FROM $TBL_TRANSACTIONS " +
+                    "WHERE $T_FO_OBJECT_ID = '$foId'" +
+                    "AND $T_ATTACHMENT_ID IN ('${Const.ATTCH_PARENT}', '${Const.ATTCH_NONE}')"
+        val cursor: Cursor?
+
+        try {
+            cursor = db.rawQuery(selectQuery,null)
+        }catch (e: java.lang.Exception){
+            e.printStackTrace()
+            db.execSQL(selectQuery)
+            return ArrayList()
+        }
+
+        var id: String
+        var name: String
+        var amount: Double
+        var financialObjectId: String
+        var date: String
+        var calendarDate: Calendar
+        var attachmentId: String
+
+
+        if (cursor.moveToFirst()){
+            do {
+                id = cursor.getString(cursor.getColumnIndex(T_ID))
+                name = cursor.getString(cursor.getColumnIndex(T_NAME))
+                amount = cursor.getDouble(cursor.getColumnIndex(T_AMOUNT))
+                financialObjectId = cursor.getString(cursor.getColumnIndex(T_FO_OBJECT_ID))
+                date = cursor.getString(cursor.getColumnIndex(T_DATE))
+                calendarDate = CalendarTools.stringToCalendarFromDatabase(date)
+                attachmentId = cursor.getString(cursor.getColumnIndex(T_ATTACHMENT_ID))
+                val transaction = FinancialObjectTransactionModel(
+                    id,
+                    name,
+                    amount,
+                    financialObjectId,
+                    calendarDate,
+                    attachmentId
+                )
+                transactionsList.add(transaction)
+            }while (cursor.moveToNext())
+        }
+        return transactionsList
     }
 
     fun deleteFinancialObjectTransaction(fot: FinancialObjectTransactionModel): Int{
@@ -274,9 +367,6 @@ class SQLiteHelper(context: Context): SQLiteOpenHelper(context, DATABASE_NAME, n
         db.close()
         return success
     }
-
-
-
 
 
 }

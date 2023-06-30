@@ -2,6 +2,7 @@ package com.example.budgettracker
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -9,11 +10,21 @@ import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import java.math.BigDecimal
+import java.util.Calendar
+import kotlin.math.roundToInt
+import kotlin.streams.asSequence
 
 class WalletCreateTransactionActivity : AppCompatActivity() {
+    private lateinit var etWalletTransactionName: EditText
+    private lateinit var etWalletTransactionAmount: EditText
+    private lateinit var bWalletCreateTransaction: Button
+    private lateinit var sqlLiteHelper: SQLiteHelper
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_wallet_create_transaction)
+        initViews()
+        sqlLiteHelper = SQLiteHelper(this)
 
         //For when back gesture or button is triggered will return to Main[financial obj]Activity
         val callback = onBackPressedDispatcher.addCallback(this) {
@@ -21,24 +32,31 @@ class WalletCreateTransactionActivity : AppCompatActivity() {
             finish()
         }
 
-        //get all views from layout
-        val etWalletTransactionName = findViewById<EditText>(R.id.etWalletTransactionName)
-        val etWalletTransactionAmount = findViewById<EditText>(R.id.etWalletTransactionAmount)
-        val bWalletCreateTransaction = findViewById<Button>(R.id.bWalletCreateTransaction)
-
         //Get transaction type and where to link transaction from intent.
         val bundle: Bundle? = intent.extras
-        val transactionType = bundle!!.getString("transaction type")
-        val walletId = bundle!!.getString("wallet id")
+        val transactionType = bundle!!.getString(Const.INTENT_KEY_TRANSACTION_TYPE)
+        val walletId = bundle!!.getString(Const.INTENT_KEY_WALLET_ID)
+
+        if (walletId.isNullOrEmpty()){
+            val builder = AlertDialog.Builder(this)
+            builder.setPositiveButton("OK"){dialog, which ->
+                dialog.dismiss()
+                setResult(RESULT_OK)
+                finish()
+            }
+            builder.setTitle("Wallet ID could not be found.")
+            builder.show()
+        }
 
         //Setting the Title
-        val title = if (transactionType.equals("add")) "Add Transaction"
+        val title = if (transactionType.equals(Const.INTENT_VALUE_ADD_TRANSACTION)) "Add Transaction"
         else "Subtract Transaction"
         setTitle(title)
 
         //Create Transaction Button Functionality
         bWalletCreateTransaction.setOnClickListener {
             //============Validations============//
+
             val builder = AlertDialog.Builder(this)
 
             builder.setPositiveButton("OK") { dialog, which ->
@@ -51,7 +69,7 @@ class WalletCreateTransactionActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            if (StringTools.isNullOrEmpty(etWalletTransactionAmount.text.toString())){
+            if (StringTools.isNullOrEmpty(etWalletTransactionAmount.text.toString().replace(",",""))){
                 builder.setTitle("Transaction's Amount must not be blank")
                 builder.show()
                 return@setOnClickListener
@@ -59,17 +77,12 @@ class WalletCreateTransactionActivity : AppCompatActivity() {
 
             //After validation, get wallet transaction data from edit texts in view.
             val transactionName: String = etWalletTransactionName.text.toString()
-            val transactionAmount: BigDecimal = BigDecimal(
-                etWalletTransactionAmount.text.toString()
-            )
+            val transactionAmount: Double = etWalletTransactionAmount.text.toString()
+                .replace(",","").toDouble()
 
-            //Retrieve the child financial object(wallet) where the new transaction will be linked
-            val fo: FinancialObject = FileManager.loadFinancialObject(
-                applicationContext.filesDir.absolutePath,
-                Constants.SAVINGS_FILENAME
-            )
-            val wallet = fo.childFinancialObjects.get(walletId)
 
+            //Check if wallet ID is an actual Financial Object within the database.
+            val wallet = sqlLiteHelper.getFinancialObject(walletId!!)
             if(wallet==null){
                 Toast.makeText(
                     this,
@@ -80,23 +93,26 @@ class WalletCreateTransactionActivity : AppCompatActivity() {
             }
 
             //Add Transaction
-            if (transactionType.equals("add")){
-                wallet.createFinancialTransaction(
+            if (transactionType.equals(Const.INTENT_VALUE_ADD_TRANSACTION)){
+                val transactionId = generateAlphaNumericId(16)
+                val transactionDate = Calendar.getInstance()
+                val newTransaction = FinancialObjectTransactionModel(
+                    transactionId,
                     transactionName,
-                    "",
-                    transactionAmount
+                    transactionAmount,
+                    walletId,
+                    transactionDate,
+                    Const.ATTCH_NONE
                 )
-                FileManager.saveFinancialObject(
-                    fo,
-                    applicationContext.filesDir.absolutePath,
-                    Constants.SAVINGS_FILENAME
-                )
+
+                sqlLiteHelper.insertFinancialObjectTransaction(newTransaction)
 
             }
 
             //Subtract Transaction
-            if(transactionType.equals("sub")){
-                if(wallet.financialTransactionsTotal.subtract(transactionAmount).signum() == -1){
+            if(transactionType.equals(Const.INTENT_VALUE_SUB_TRANSACTION)){
+                Log.d("condition", "${wallet.valueAmount} : $transactionAmount")
+                if (wallet.valueAmount < transactionAmount){
                     Toast.makeText(
                         this,
                         "Transaction amount cannot be larger than wallet total",
@@ -105,17 +121,18 @@ class WalletCreateTransactionActivity : AppCompatActivity() {
                     return@setOnClickListener
                 }
 
-                wallet.createFinancialTransaction(
+                val transactionId = generateAlphaNumericId(16)
+                val transactionDate = Calendar.getInstance()
+                val newTransaction = FinancialObjectTransactionModel(
+                    transactionId,
                     transactionName,
-                    "",
-                    transactionAmount.negate()
-                )
-                FileManager.saveFinancialObject(
-                    fo,
-                    applicationContext.filesDir.absolutePath,
-                    Constants.SAVINGS_FILENAME
+                    -transactionAmount,//negated because transaction is subtraction.
+                    walletId,
+                    transactionDate,
+                    Const.ATTCH_NONE
                 )
 
+                sqlLiteHelper.insertFinancialObjectTransaction(newTransaction)
             }
             val nextIntent = Intent()
             nextIntent.putExtra("walletId", walletId)
@@ -124,5 +141,28 @@ class WalletCreateTransactionActivity : AppCompatActivity() {
 
         }
 
+    }
+
+    /**
+     * Initiate all views from layout.
+     */
+    private fun initViews(){
+        etWalletTransactionName = findViewById(R.id.etWalletTransactionName)
+        etWalletTransactionAmount = findViewById(R.id.etWalletTransactionAmount)
+        etWalletTransactionAmount.addTextChangedListener(NumberTextWatcher(etWalletTransactionAmount))
+        bWalletCreateTransaction = findViewById(R.id.bWalletCreateTransaction)
+    }
+
+    /**
+     * Generates an ID with length idSize. ID generated is alphanumeric
+     * @param source What numbers, letters, and symbols the ID can be composed of.
+     * @param idSize Length of ID to be generated.
+     * @return generated ID.
+     */
+    fun generateAlphaNumericId(idSize: Long): String{
+        val source = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+        val out = java.util.Random().ints(idSize, 0, source.length)
+            .asSequence().map(source::get).joinToString("")
+        return out
     }
 }

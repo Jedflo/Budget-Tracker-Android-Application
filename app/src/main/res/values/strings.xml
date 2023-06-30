@@ -22,4 +22,8 @@
     <string name="title_activity_savings_edit">SavingsEditActivity</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="add_borrowed_item">Add Borrowed Item</string>
+    <string name="add_wallet_item">Add Wallet Item</string>
+    <string name="add_debt_item">Add Debt Item</string>
+    <string name="add_savings_item">Add Savings Item</string>
 </resources>

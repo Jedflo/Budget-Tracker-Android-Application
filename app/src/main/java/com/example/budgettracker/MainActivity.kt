@@ -2,18 +2,14 @@ package com.example.budgettracker
 
 
 
-import android.app.Activity
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.budgettracker.databinding.ActivityMainBinding
-import com.example.budgettracker.ui.dashboard.DashboardFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.math.BigDecimal
 
@@ -49,6 +45,14 @@ class MainActivity : AppCompatActivity() {
             FileManager.saveFinancialObject(mainFinancialObject,applicationContext.filesDir.absolutePath,Constants.SAVINGS_FILENAME);
             Toast.makeText(this,"Main Financial Object Created", Toast.LENGTH_SHORT)
         }
+
+//        if (mainFinancialObject != null){
+//            val savings = mainFinancialObject.savingsObjects
+//
+//        }
+
+
+
 
         //Handles navigation requests from other activities through bundle.
         if (intent != null){

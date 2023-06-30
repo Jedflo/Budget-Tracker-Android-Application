@@ -2,20 +2,27 @@ package com.example.budgettracker
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageButton
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.findNavController
 
 class WalletEditActivity : AppCompatActivity() {
+    private lateinit var displayWalletName: EditText
+    private lateinit var displayWalletDescription: EditText
+    private lateinit var displayWalletId: TextView
+    private lateinit var displayWalletDateCreated: TextView
+    private lateinit var bWalletEditSaveChanges: Button
+    private lateinit var ibWalletEditDelete: ImageButton
+    private lateinit var sqLiteHelper: SQLiteHelper
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_wallet_edit)
+
+        //Retrieve all views from activity wallet edit
+        initViews()
+        sqLiteHelper = SQLiteHelper(this)
 
         //For when back gesture or button is triggered will return to Main[financial obj]Activity
         val callback = onBackPressedDispatcher.addCallback(this) {
@@ -23,38 +30,39 @@ class WalletEditActivity : AppCompatActivity() {
             finish()
         }
 
-        //Retrieve all views from activity wallet edit
-        val displayWalletName = findViewById<EditText>(R.id.etWalletEditName)
-        val displayWalletDescription = findViewById<EditText>(R.id.etWalletEditDescription)
-        val displayWalletId = findViewById<TextView>(R.id.tvWalletId)
-        val displayWalletDateCreated = findViewById<TextView>(R.id.tvWalletDateCreated)
-
         //Retrieve Data from bundle
         val bundle: Bundle? = intent.extras
-        val walletID = bundle!!.getString("wallet id")
-        //Retrieve relevant info from save file
-        val financialObject = FileManager.loadFinancialObject(
-            applicationContext.filesDir.absolutePath,
-            Constants.SAVINGS_FILENAME
-        )
-        val wallet = financialObject.childFinancialObjects.get(walletID)
+        val walletID = bundle!!.getString(Const.INTENT_KEY_WALLET_ID)
+
+        //Check if retrieved wallet ID from bundle is null or empty. if it is throw Alert.
+        if (walletID.isNullOrEmpty()){
+            val builder = AlertDialog.Builder(this)
+            builder.setPositiveButton("OK"){dialog, which ->
+                dialog.dismiss()
+                setResult(RESULT_OK)
+                finish()
+            }
+            builder.setTitle("Wallet ID could not be found.")
+            builder.show()
+        }
+
+        //Retrieve relevant info from database
+        val wallet = sqLiteHelper.getFinancialObject(walletID!!)
+
+        //Fill out necessary edit texts
         displayWalletName.setText(wallet?.name)
         displayWalletDescription.setText(wallet?.description)
-        displayWalletId.text = wallet?.financialObjectID
-        displayWalletDateCreated.text = CalendarTools.getCalendarFormatDDMMYYYY(wallet?.dateCreated)
+        displayWalletId.text = wallet?.id
+        displayWalletDateCreated.text = CalendarTools.getCalendarFormatForDatabase(wallet?.dateCreated)
+        //TODO Add Level, might be dropdown or checkbox.
 
         //Save changes button
-        val bWalletEditSaveChanges = findViewById<Button>(R.id.bWalletEditSaveChanges)
         bWalletEditSaveChanges.setOnClickListener {
             wallet?.name = displayWalletName.text.toString()
             wallet?.description = displayWalletDescription.text.toString()
-            FileManager.saveFinancialObject(
-                financialObject,
-                applicationContext.filesDir.absolutePath,
-                Constants.SAVINGS_FILENAME
-            )
+            sqLiteHelper.updateFinancialObject(wallet!!)
             val nextIntent = Intent()
-            nextIntent.putExtra("walletId", wallet?.financialObjectID)
+            nextIntent.putExtra(Const.INTENT_KEY_WALLET_ID, wallet?.id)
             setResult(RESULT_OK,nextIntent)
             finish()
 
@@ -65,7 +73,7 @@ class WalletEditActivity : AppCompatActivity() {
         val walletNameString = wallet?.name
         builder.setTitle("Delete $walletNameString ?")
         builder.setMessage(
-            "This action cannot be undone and $walletNameString data will be lost forever"
+            "This action cannot be undone and all related data to $walletNameString will be lost forever"
         )
 
         //Dismisses Alert Dialog if user chooses not to delete
@@ -75,12 +83,7 @@ class WalletEditActivity : AppCompatActivity() {
 
         //Deletion Process Begins when alert dialog for delete is confirmed
         builder.setNegativeButton("YES"){dialog, which->
-            financialObject.deleteChildObject(wallet?.financialObjectID)
-            FileManager.saveFinancialObject(
-                financialObject,
-                applicationContext.filesDir.absolutePath,
-                Constants.SAVINGS_FILENAME
-            )
+            sqLiteHelper.deleteFinancialObject(wallet!!)
             Toast.makeText(
                 this,
                 "$walletNameString Successfully Deleted",
@@ -91,13 +94,21 @@ class WalletEditActivity : AppCompatActivity() {
             finish()
         }
 
-        val ibWalletEditDelete = findViewById<ImageButton>(R.id.ibWalletEditDelete)
         ibWalletEditDelete.setOnClickListener {
             builder.show()
         }
 
 
 
+    }
+
+    private fun initViews(){
+        displayWalletName = findViewById(R.id.etWalletEditName)
+        displayWalletDescription = findViewById(R.id.etWalletEditDescription)
+        displayWalletId = findViewById(R.id.tvWalletId)
+        displayWalletDateCreated = findViewById(R.id.tvWalletDateCreated)
+        bWalletEditSaveChanges = findViewById(R.id.bWalletEditSaveChanges)
+        ibWalletEditDelete = findViewById(R.id.ibWalletEditDelete)
     }
 
 

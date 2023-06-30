@@ -28,6 +28,9 @@
             app:launchSingleTop="true"
             app:popUpTo="@id/mobile_navigation"
             app:popUpToInclusive="true"/>
+        <action
+            android:id="@+id/action_navigation_dashboard_to_borrowedFragment"
+            app:destination="@id/borrowedFragment" />
 
 
     </fragment>
@@ -45,6 +48,11 @@
         android:label="fragment_start"
         tools:layout="@layout/fragment_start"
     />
+    <fragment
+        android:id="@+id/borrowedFragment"
+        android:name="com.example.budgettracker.ui.borrowed.BorrowedFragment"
+        android:label="fragment_borrowed"
+        tools:layout="@layout/fragment_borrowed" />
 
 
 </navigation>

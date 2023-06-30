@@ -11,19 +11,18 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.budgettracker.*
 import com.example.budgettracker.databinding.FragmentDashboardBinding
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.math.BigDecimal
 
 class DashboardFragment : Fragment() {
 
+    private lateinit var mySQLiteHelper: SQLiteHelper
     private lateinit var walletAdapter: WalletAdapter
     private lateinit var walletRecyclerView: RecyclerView
-    private lateinit var walletList: ArrayList<WalletModel>
+    private lateinit var walletList: ArrayList<FinancialObjectModel>
     lateinit var walletNames: ArrayList<String>
     lateinit var walletAmounts: ArrayList<BigDecimal>
     private var _binding: FragmentDashboardBinding? = null
@@ -56,11 +55,7 @@ class DashboardFragment : Fragment() {
         _binding = FragmentDashboardBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-
-        dashboardViewModel.text.observe(viewLifecycleOwner) {
-
-        }
-
+        mySQLiteHelper = SQLiteHelper(requireActivity().applicationContext)
         //Create Wallet Transition
         val bCreateWallet = root.findViewById<Button>(R.id.bAddWallet)
         bCreateWallet.setOnClickListener {
@@ -92,7 +87,11 @@ class DashboardFragment : Fragment() {
         //Set RecyclerView's layout manager
         walletRecyclerView.layoutManager = layoutManager
         walletRecyclerView.setHasFixedSize(false)
-
+        //Sort wallet by creation date.
+        walletList.sortWith((
+                Comparator.comparing(
+                    FinancialObjectModel::dateCreated
+                )).reversed())
         //Use the walletAdapter on walletList
         walletAdapter = WalletAdapter(walletList)
         //Populate RecyclerView with data.
@@ -100,39 +99,47 @@ class DashboardFragment : Fragment() {
         //Set onClickListener on RecyclerView elements
         walletAdapter.setOnItemClickListener(object: WalletAdapter.onItemClickListener{
             override fun onItemClick(position: Int) {
-                val clickedItem = walletList.get(position)
-                val walletId = clickedItem.walletId
+                val clickedItem = walletList[position]
+                val walletId = clickedItem.id
                 val intent = Intent(context, MainWalletActivity::class.java)
-                intent.putExtra("walletId", walletId)
+                intent.putExtra(Const.INTENT_KEY_WALLET_ID, walletId)
                 activityResultLauncher.launch(intent)
             }
         })
 
     }
 
+//    private fun initializeWalletData(){
+//        walletList = arrayListOf<WalletModel>()
+//
+//        val mainFinancialObject: FinancialObject =
+//            FileManager.loadFinancialObject(
+//                context?.filesDir?.absolutePath,
+//                Constants.SAVINGS_FILENAME)?: return
+//
+//        val walletMap: HashMap<String,FinancialObject> = mainFinancialObject.childFinancialObjects
+//        val numberFormatter: NumberFormatter = NumberFormatter()
+//        for(wallet in walletMap){
+//            wallet.key
+//            wallet.value
+//            val wallet = WalletModel(
+//                wallet.key,
+//                wallet.value.name,
+//                numberFormatter.formatNumber(wallet.value.financialTransactionsTotal)
+//            )
+//            walletList.add(wallet)
+//        }
+//
+//
+//    }
+
+
     private fun initializeWalletData(){
-        walletList = arrayListOf<WalletModel>()
-
-        val mainFinancialObject: FinancialObject =
-            FileManager.loadFinancialObject(
-                context?.filesDir?.absolutePath,
-                Constants.SAVINGS_FILENAME)?: return
-
-        val walletMap: HashMap<String,FinancialObject> = mainFinancialObject.childFinancialObjects
-        val numberFormatter: NumberFormatter = NumberFormatter()
-        for(wallet in walletMap){
-            wallet.key
-            wallet.value
-            val wallet = WalletModel(
-                wallet.key,
-                wallet.value.name,
-                numberFormatter.formatNumber(wallet.value.financialTransactionsTotal)
-            )
-            walletList.add(wallet)
-        }
-
-
+        walletList = mySQLiteHelper.getFinancialObjects(Const.FO_TYPE_WALLET)
     }
+
+
+
 
 
 

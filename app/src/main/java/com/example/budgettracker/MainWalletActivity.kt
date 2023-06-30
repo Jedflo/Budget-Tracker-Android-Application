@@ -9,14 +9,20 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.math.BigDecimal
 
 class MainWalletActivity : AppCompatActivity() {
-    private lateinit var walletTransactionsList: ArrayList<FinancialTransactionWalletModel>
+    private lateinit var walletTransactionsList: ArrayList<FinancialObjectTransactionModel>
     private lateinit var walletTransactionsRecyclerView: RecyclerView
+    private lateinit var walletName: TextView
+    private lateinit var walletDescription: TextView
+    private lateinit var walletAmount: TextView
+    private lateinit var sqLiteHelper: SQLiteHelper
+    private lateinit var bAddWalletTransaction: Button
+    private lateinit var bSubWalletTransaction: Button
+    private lateinit var bTranferFromWallet: Button
 
     lateinit var mainWalletAct: Activity
 
@@ -46,75 +52,70 @@ class MainWalletActivity : AppCompatActivity() {
         mainWalletAct = this
 
         //Retrieve all views from layout.
-        val walletName: TextView = findViewById(R.id.tvMainWalletName)
-        val walletDescription: TextView = findViewById(R.id.tvMainWalletDescription)
-        val walletAmount: TextView = findViewById(R.id.tvMainWalletTotalAmount)
+        initViews()
+        sqLiteHelper = SQLiteHelper(this)
 
         //Retrieve information from bundle sent from Wallet Fragment
         val bundle: Bundle? = intent.extras
-        val walletId = bundle!!.getString("walletId")
+        val walletId = bundle!!.getString(Const.INTENT_KEY_WALLET_ID)
 
         //retrieve wallet object using wallet Id to retrieve wallet details..
-        val wallet = FileManager.loadFinancialObject(
-            applicationContext.filesDir.absolutePath,
-            Constants.SAVINGS_FILENAME
-        ).childFinancialObjects.get(walletId)
+        val wallet = sqLiteHelper.getFinancialObject(walletId!!)
+
+
 
         //Set wallet details in activity.
         walletName.text = wallet?.name
         walletDescription.text = wallet?.description
-        walletAmount.text = BigDecimalTools.prepareForPrint(wallet?.financialTransactionsTotal)
+        walletAmount.text = prepareDoubleForPrint(wallet?.valueAmount!!)
 
-        setTitle(wallet?.name)
+        title = wallet?.name
 
         //Populate the FT recyclerview.
-        initializeWalletTransactionData(walletId)
+        initializeWalletTransactionData(walletId)//TODO use calendar for date in FinancialObjectTransactionModel
         var financialTransactionRecyclerView= findViewById<RecyclerView>(R.id.rvTransactionsWallet)
         financialTransactionRecyclerView.layoutManager = LinearLayoutManager(this)
         financialTransactionRecyclerView.setHasFixedSize(true)
+        //Sort transactions by date. newest first, oldest last.
         walletTransactionsList.sortWith((
                 Comparator.comparing(
-                    FinancialTransactionWalletModel::ftwTransactionDate
+                    FinancialObjectTransactionModel::transactionDate
                 )).reversed())
         var walletTransactionAdapter = FinancialTransactionWalletAdapter(walletTransactionsList)
         financialTransactionRecyclerView.adapter = walletTransactionAdapter
 
         walletTransactionAdapter.setOnItemClickListener(object : FinancialTransactionWalletAdapter.onItemClickListener{
             override fun onItemClick(position: Int) {
-                val clickedItem = walletTransactionsList.get(position)
-                clickedItem.ftwId
+                val clickedItem = walletTransactionsList[position]
+                clickedItem.id
                 Toast.makeText(
                     this@MainWalletActivity,
-                    "Transaction ID:" + clickedItem.ftwId,
+                    "Transaction ID:" + clickedItem.id,
                     Toast.LENGTH_SHORT
                 ).show()
             }
         })
 
         //Get add and subtract buttons from layout
-        val bAddWalletTransaction = findViewById<Button>(R.id.bAddTransactionWallet)
-        val bSubWalletTransaction = findViewById<Button>(R.id.bSubTransactionWallet)
-        val bTranferFromWallet = findViewById<Button>(R.id.bTransferTransactionWallet)
         //Check if wallet balance is >0, if it is, enable subtract button, else leave disabled.
-        val walletTotal = wallet?.financialTransactionsTotal
-        val isButtonsEnabled = walletTotal?.compareTo(BigDecimal.ZERO)!! >0
+        val walletTotal = wallet?.valueAmount
+        val isButtonsEnabled = walletTotal!! > 0
         bSubWalletTransaction.isEnabled = isButtonsEnabled
         bTranferFromWallet.isEnabled = isButtonsEnabled
-
 
         val intent = Intent(this, WalletCreateTransactionActivity::class.java)
 
         //Button for adding to wallet
         bAddWalletTransaction.setOnClickListener {
-            intent.putExtra("transaction type", "add")
-            intent.putExtra("wallet id", walletId)
+            intent.putExtra(Const.INTENT_KEY_TRANSACTION_TYPE, Const.INTENT_VALUE_ADD_TRANSACTION)
+            intent.putExtra(Const.INTENT_KEY_WALLET_ID, walletId)
             activityResultLauncher.launch(intent)
         }
 
         //Button for subtracting from wallet.
         bSubWalletTransaction.setOnClickListener {
-            intent.putExtra("transaction type", "sub")
-            intent.putExtra("wallet id", walletId)
+            intent.putExtra(Const.INTENT_KEY_TRANSACTION_TYPE, Const.INTENT_VALUE_SUB_TRANSACTION)
+            intent.putExtra(Const.INTENT_KEY_WALLET_ID, walletId)
             activityResultLauncher.launch(intent)
         }
 
@@ -126,14 +127,14 @@ class MainWalletActivity : AppCompatActivity() {
             activityResultLauncher.launch(intent)
         }
 
-        //Button for transfer
-
-        bTranferFromWallet.setOnClickListener {
-            val intent = Intent(this, GeneralTransferActivity::class.java)
-            intent.putExtra("wallet id", walletId)
-            intent.putExtra(Constants.INTENT_KEY_RQST_FR, Constants.INTENT_VAL_RQST_FR_WALLET)
-            activityResultLauncher.launch(intent)
-        }
+//        //Button for transfer
+//
+//        bTranferFromWallet.setOnClickListener {
+//            val intent = Intent(this, GeneralTransferActivity::class.java)
+//            intent.putExtra("wallet id", walletId)
+//            intent.putExtra(Constants.INTENT_KEY_RQST_FR, Constants.INTENT_VAL_RQST_FR_WALLET)
+//            activityResultLauncher.launch(intent)
+//        }
 
         //Back Button
         val bBackToWalletHome = findViewById<Button>(R.id.bBackWallet)
@@ -147,28 +148,17 @@ class MainWalletActivity : AppCompatActivity() {
         }
     }
 
-    private fun initializeWalletTransactionData(walletId: String?){
-        //initialize wallet transaction list
-        walletTransactionsList = arrayListOf<FinancialTransactionWalletModel>()
-        val fo: FinancialObject
-        fo = FileManager.loadFinancialObject(
-            applicationContext.filesDir.absolutePath,
-            Constants.SAVINGS_FILENAME
-        )
-        val walletFinancialTransactions = fo.childFinancialObjects.get(walletId)?.transactions?:
-        return
+    private fun initViews(){
+        walletName = findViewById(R.id.tvMainWalletName)
+        walletDescription = findViewById(R.id.tvMainWalletDescription)
+        walletAmount = findViewById(R.id.tvMainWalletTotalAmount)
+        bAddWalletTransaction = findViewById(R.id.bAddTransactionWallet)
+        bSubWalletTransaction = findViewById(R.id.bSubTransactionWallet)
+        bTranferFromWallet = findViewById(R.id.bTransferTransactionWallet)
+    }
 
-        for(financialTransaction in walletFinancialTransactions.values){
-            val walletFT = FinancialTransactionWalletModel(
-                financialTransaction.financialTransactionID,
-                financialTransaction.name,
-                financialTransaction.amount,
-                financialTransaction.dateCreated
-            )
-            walletTransactionsList.add(walletFT)
-        }
-
-
+    private fun initializeWalletTransactionData(walletId: String){
+        walletTransactionsList = sqLiteHelper.getTransactionsOnFinancialObject(walletId)
     }
 
 }

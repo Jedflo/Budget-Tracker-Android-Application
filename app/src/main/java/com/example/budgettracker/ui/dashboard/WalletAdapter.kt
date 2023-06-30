@@ -5,9 +5,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.budgettracker.FinancialObjectModel
 import com.example.budgettracker.R
+import com.example.budgettracker.SQLiteHelper
 
-class WalletAdapter(private val walletList: ArrayList<WalletModel>) : RecyclerView.Adapter<WalletAdapter.MyViewHolder>() {
+class WalletAdapter(private val walletList: ArrayList<FinancialObjectModel>) : RecyclerView.Adapter<WalletAdapter.MyViewHolder>() {
 
     private lateinit var mListener : onItemClickListener
 
@@ -29,8 +31,8 @@ class WalletAdapter(private val walletList: ArrayList<WalletModel>) : RecyclerVi
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
         val currentItem = walletList[position]
-        holder.walletName.setText(currentItem.walletName)
-        holder.walletAmount.setText(currentItem.walletAmount)
+        holder.walletName.setText(currentItem.name)
+        holder.walletAmount.setText(currentItem.valueAmount.toString())
     }
 
     override fun getItemCount(): Int {

@@ -7,13 +7,14 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.findNavController
 import java.math.BigDecimal
 
 class WalletAddActivity : AppCompatActivity() {
+    private lateinit var sqLiteHelper: SQLiteHelper
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_wallet_add)
+        sqLiteHelper = SQLiteHelper(this)
 
         //Find views where we will get the data to create a wallet first
         val bCreateWallet = findViewById<Button>(R.id.bWalletAddCreateWallet)
@@ -39,23 +40,13 @@ class WalletAddActivity : AppCompatActivity() {
             }
 
             //create wallet using collected data.
-            val newWallet = FinancialObject(newWalletName,newWalletDescription, BigDecimal.ZERO)
-            val newWalletKey = newWallet.financialObjectID
-
-            //Load Financial Object
-            val mainFinancialObject = FileManager.loadFinancialObject(
-                applicationContext.filesDir.absolutePath,
-                Constants.SAVINGS_FILENAME
+            val newWallet = FinancialObjectModel(
+                type = Const.FO_TYPE_WALLET,
+                name = newWalletName,
+                description = newWalletDescription
             )
-
-            //Add new wallet to Financial Object
-            mainFinancialObject.childFinancialObjects.put(newWalletKey, newWallet)
-
-            FileManager.saveFinancialObject(
-                mainFinancialObject,
-                applicationContext.filesDir.absolutePath,
-                Constants.SAVINGS_FILENAME
-            )
+            val newWalletKey = newWallet.id
+            sqLiteHelper.insertFinancialObject(newWallet)
 
             //send toast to user which confirms that the file has been saved
             Toast.makeText(
@@ -65,7 +56,7 @@ class WalletAddActivity : AppCompatActivity() {
             ).show()
 
             val intent = Intent(applicationContext, MainWalletActivity::class.java)
-            intent.putExtra("walletId", newWalletKey)
+            intent.putExtra(Const.INTENT_KEY_WALLET_ID, newWalletKey)
             intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
             setResult(RESULT_OK)

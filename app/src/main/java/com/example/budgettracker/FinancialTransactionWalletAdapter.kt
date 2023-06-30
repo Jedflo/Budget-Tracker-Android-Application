@@ -7,7 +7,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
 class FinancialTransactionWalletAdapter (
-    private val financialTransactionsWalletList: ArrayList<FinancialTransactionWalletModel>):
+    private val financialTransactionsWalletList: ArrayList<FinancialObjectTransactionModel>):
     RecyclerView.Adapter<FinancialTransactionWalletAdapter.FtwViewHolder>() {
 
     private lateinit var mListener : onItemClickListener
@@ -32,11 +32,12 @@ class FinancialTransactionWalletAdapter (
 
     override fun onBindViewHolder(holder: FtwViewHolder, position: Int) {
         val currentItem = financialTransactionsWalletList[position]
-        holder.ftwName.text = currentItem.ftwName
-        holder.ftwAmount.text = BigDecimalTools.prepareForPrint(currentItem.ftwAmount)
+        holder.ftwName.text = currentItem.name
+        holder.ftwAmount.text = prepareDoubleForPrint(currentItem.amount)
         holder.ftwTransacDate.text = CalendarTools.getCalendarFormatDDMMYYYY(
-            currentItem.ftwTransactionDate
+            currentItem.transactionDate
         )
+
     }
 
     override fun getItemCount(): Int {

@@ -1,6 +1,6 @@
 package com.example.budgettracker
 
-import java.util.Date
+import java.util.*
 
 /**
  * @param id ID of the transaction.
@@ -16,6 +16,6 @@ data class FinancialObjectTransactionModel(
     var name: String,
     var amount: Double,
     var objectId: String,
-    var transactionDate: Date,
+    var transactionDate: Calendar,
     var attachmentId: String //Parent, Child, Null
 )

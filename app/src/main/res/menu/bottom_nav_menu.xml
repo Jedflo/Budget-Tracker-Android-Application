@@ -16,4 +16,10 @@
         android:icon="@drawable/ic_notifications_debt_page_24"
         android:title="Debts" />
 
+    <item
+        android:id="@+id/borrowedFragment"
+        android:icon="@drawable/ic_notifications_debt_page_24"
+        android:title="Borrowed"
+        />
+
 </menu>
