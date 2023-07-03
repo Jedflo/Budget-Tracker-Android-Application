@@ -59,6 +59,8 @@ class MainWalletActivity : AppCompatActivity() {
         val bundle: Bundle? = intent.extras
         val walletId = bundle!!.getString(Const.INTENT_KEY_WALLET_ID)
 
+        //TODO create alert dialog error for checking id from bundle
+
         //retrieve wallet object using wallet Id to retrieve wallet details..
         val wallet = sqLiteHelper.getFinancialObject(walletId!!)
 
@@ -72,7 +74,7 @@ class MainWalletActivity : AppCompatActivity() {
         title = wallet?.name
 
         //Populate the FT recyclerview.
-        initializeWalletTransactionData(walletId)//TODO use calendar for date in FinancialObjectTransactionModel
+        initializeWalletTransactionData(walletId)
         var financialTransactionRecyclerView= findViewById<RecyclerView>(R.id.rvTransactionsWallet)
         financialTransactionRecyclerView.layoutManager = LinearLayoutManager(this)
         financialTransactionRecyclerView.setHasFixedSize(true)

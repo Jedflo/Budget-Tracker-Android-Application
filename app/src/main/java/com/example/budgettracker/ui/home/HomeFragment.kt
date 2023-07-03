@@ -19,9 +19,10 @@ import java.math.BigDecimal
 
 class HomeFragment : Fragment() {
 
+    private lateinit var sqLiteHelper: SQLiteHelper
     private lateinit var savingsAdapter: SavingsAdapter
     private lateinit var savingsRecyclerView : RecyclerView
-    private lateinit var savingsList : ArrayList<SavingsModel>
+    private lateinit var savingsList : ArrayList<FinancialObjectModel>
     lateinit var savingsTitle : ArrayList<String>
     lateinit var savingsAmount : ArrayList<BigDecimal>
     private var _binding: FragmentHomeBinding? = null
@@ -55,18 +56,17 @@ class HomeFragment : Fragment() {
         val root: View = binding.root
 
         homeViewModel.text.observe(viewLifecycleOwner) {
-
         }
 
-        //Add Savings Transition
+        sqLiteHelper = SQLiteHelper(requireActivity().applicationContext)
+
+        //Create Savings Transition
         val bAddSavingsItem = root.findViewById<Button>(R.id.bAddSavings)
         bAddSavingsItem.setOnClickListener {
             val intent = Intent(context, SavingsAddActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK
             activityResultLauncher.launch(intent)
         }
-
-
         return root
     }
 
@@ -99,15 +99,11 @@ class HomeFragment : Fragment() {
         //Set on click listener on recycler view elements.
         savingsAdapter.setOnItemClickListener(object : SavingsAdapter.onItemClickListener{
             override fun onItemClick(position: Int) {
-                val clickedItem = savingsList.get(position)
-                val savingId = clickedItem.savingsId
-                val savingName = clickedItem.savingsName
-                val savingAmount = clickedItem.savingsAmouunt
+                val clickedItem = savingsList[position]
+                val savingId = clickedItem.id
 
                 val intent = Intent(context, MainSavingsActivity::class.java)
-                intent.putExtra("id", savingId)
-                intent.putExtra("name", savingName)
-                intent.putExtra("amount", savingAmount)
+                intent.putExtra(Const.INTENT_KEY_SAVINGS_ID, savingId)
                 activityResultLauncher.launch(intent)
 
             }
@@ -117,27 +113,31 @@ class HomeFragment : Fragment() {
 
     }
 
+//    private fun initializeSavingsData(){
+//        savingsList = arrayListOf<SavingsModel>()
+//
+//        val mainFinancialObject: FinancialObject =
+//            FileManager.loadFinancialObject(context?.filesDir?.absolutePath,Constants.SAVINGS_FILENAME)
+//                ?: return
+//
+//        val savingsMap: HashMap<String, FinancialSavings> = mainFinancialObject.savingsObjects
+//        val numberFormatter: NumberFormatter = NumberFormatter()
+//        for (financialSaving in savingsMap){
+//            val savings = SavingsModel(
+//                financialSaving.value.financialObjectID,
+//                financialSaving.value.name,
+//                financialSaving.value.description,
+//                numberFormatter.formatNumber(financialSaving.value.financialTransactionsTotal),
+//                financialSaving.value.status,
+//                numberFormatter.formatNumber(financialSaving.value.amount))
+//            savingsList.add(savings)
+//        }
+//
+//
+//    }
+
     private fun initializeSavingsData(){
-        savingsList = arrayListOf<SavingsModel>()
-
-        val mainFinancialObject: FinancialObject =
-            FileManager.loadFinancialObject(context?.filesDir?.absolutePath,Constants.SAVINGS_FILENAME)
-                ?: return
-
-        val savingsMap: HashMap<String, FinancialSavings> = mainFinancialObject.savingsObjects
-        val numberFormatter: NumberFormatter = NumberFormatter()
-        for (financialSaving in savingsMap){
-            val savings = SavingsModel(
-                financialSaving.value.financialObjectID,
-                financialSaving.value.name,
-                financialSaving.value.description,
-                numberFormatter.formatNumber(financialSaving.value.financialTransactionsTotal),
-                financialSaving.value.status,
-                numberFormatter.formatNumber(financialSaving.value.amount))
-            savingsList.add(savings)
-        }
-
-
+        savingsList = sqLiteHelper.getFinancialObjects(Const.FO_TYPE_SAVINGS)
     }
 
 

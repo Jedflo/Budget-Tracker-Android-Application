@@ -10,9 +10,21 @@ import java.math.BigDecimal
 
 
 class SavingsEditActivity : AppCompatActivity() {
+    private lateinit var savingsName: EditText
+    private lateinit var savingsDescription: EditText
+    private lateinit var savingsGoalAmount: EditText
+    private lateinit var savingsStatus: TextView
+    private lateinit var savingsId: TextView
+    private lateinit var savingDateCreated: TextView
+    private lateinit var sqLiteHelper: SQLiteHelper
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_savings_edit)
+
+        //Retrieve all views from savings edit layout
+        initViews()
+        sqLiteHelper = SQLiteHelper(this)
 
         //For when back gesture or button is triggered will return to Main[financial obj]Activity
         val callback = onBackPressedDispatcher.addCallback(this) {
@@ -20,29 +32,31 @@ class SavingsEditActivity : AppCompatActivity() {
             finish()
         }
 
-        //Retrieve all views from savings edit layout
-        val savingsName = findViewById<EditText>(R.id.etSavingsEditName)
-        val savingsDescription = findViewById<EditText>(R.id.etSavingsEditDescription)
-        val savingsGoalAmount = findViewById<EditText>(R.id.etSavingsEditGoalAmount)
-        val savingsStatus = findViewById<TextView>(R.id.tvSavingsEditStatus)
-        val savingsId = findViewById<TextView>(R.id.tvSavingsEditId)
-        val savingDateCreated = findViewById<TextView>(R.id.tvSavingsEditDateCreated)
-
-
         //Retrieve Data from bundle
         val bundle : Bundle? = intent.extras
-        val name = bundle!!.getString("id")
+        val savingsId = bundle!!.getString(Const.INTENT_KEY_SAVINGS_ID)
 
-        val financialObject = FileManager.loadFinancialObject(
-            applicationContext.filesDir.absolutePath,
-            Constants.SAVINGS_FILENAME
-        )
-        val financialSavings = financialObject.savingsObjects.get(name)
+        //Check if retrieved wallet ID from bundle is null or empty. if it is throw Alert.
+        if (savingsId.isNullOrEmpty()){
+            val builder = AlertDialog.Builder(this)
+            builder.setPositiveButton("OK"){dialog, which ->
+                dialog.dismiss()
+                setResult(RESULT_OK)
+                finish()
+            }
+            builder.setTitle("Savings ID could not be found.")
+            builder.show()
+        }
+
+        //Retrieve financial object from database.
+        val financialSavings  = sqLiteHelper.getFinancialObject(savingsId!!)
+
+        //From retrieved financial object, fill out necessary edit texts.
         savingsName.setText(financialSavings?.name)
         savingsDescription.setText(financialSavings?.description)
-        savingsGoalAmount.setText(BigDecimalTools.prepareForPrintNC(financialSavings?.amount))
-        savingsStatus.text = financialSavings?.status
-        savingsId.text = financialSavings?.financialObjectID
+        savingsGoalAmount.setText(prepareDoubleForPrint(financialSavings?.targetAmount!!))
+        //savingsStatus.text = financialSavings?.status
+        this.savingsId.text = financialSavings?.id
         savingDateCreated.text = CalendarTools.getCalendarFormatDDMMYYYY(
             financialSavings?.dateCreated
         )
@@ -53,15 +67,12 @@ class SavingsEditActivity : AppCompatActivity() {
             financialSavings?.name = savingsName.text.toString()
             financialSavings?.description = savingsDescription.text.toString()
             if(StringTools.isNumeric(savingsGoalAmount.text.toString())){
-                financialSavings?.amount = BigDecimal(savingsGoalAmount.text.toString())
+                financialSavings?.targetAmount = savingsGoalAmount.text.toString()
+                    .replace(",","").toDouble()
             }
-            FileManager.saveFinancialObject(
-                financialObject,
-                applicationContext.filesDir.absolutePath,
-                Constants.SAVINGS_FILENAME
-            )
+            sqLiteHelper.updateFinancialObject(financialSavings)
             val intent = Intent()
-            intent.putExtra("id", financialSavings?.financialObjectID)
+            intent.putExtra(Const.INTENT_KEY_SAVINGS_ID, financialSavings?.id)
             setResult(RESULT_OK, intent)
             finish()
         }
@@ -81,12 +92,7 @@ class SavingsEditActivity : AppCompatActivity() {
 
         //Deletion Process Begins when alert dialog for delete is confirmed
         builder.setNegativeButton("YES"){dialog, which->
-            financialObject.deleteSavingsObject(financialSavings?.financialObjectID)
-            FileManager.saveFinancialObject(
-                financialObject,
-                applicationContext.filesDir.absolutePath,
-                Constants.SAVINGS_FILENAME
-            )
+            sqLiteHelper.deleteFinancialObject(financialSavings)
             Toast.makeText(
                 this,
                 "$savingsNameString Successfully Deleted",
@@ -104,5 +110,15 @@ class SavingsEditActivity : AppCompatActivity() {
         }
 
 
+    }
+
+    private fun initViews() {
+        savingsName = findViewById(R.id.etSavingsEditName)
+        savingsDescription = findViewById(R.id.etSavingsEditDescription)
+        savingsGoalAmount = findViewById(R.id.etSavingsEditGoalAmount)
+        savingsGoalAmount.addTextChangedListener(NumberTextWatcher(savingsGoalAmount))
+        savingsStatus = findViewById(R.id.tvSavingsEditStatus)
+        savingsId = findViewById(R.id.tvSavingsEditId)
+        savingDateCreated = findViewById(R.id.tvSavingsEditDateCreated)
     }
 }

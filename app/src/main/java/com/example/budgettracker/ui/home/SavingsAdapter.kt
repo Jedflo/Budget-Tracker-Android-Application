@@ -6,10 +6,12 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.budgettracker.FinancialObjectModel
 import com.example.budgettracker.R
+import com.example.budgettracker.prepareDoubleForPrint
 import java.math.BigDecimal
 
-class SavingsAdapter(private val savingsList : ArrayList<SavingsModel>) : RecyclerView.Adapter<SavingsAdapter.MyViewHolder>() {
+class SavingsAdapter(private val savingsList : ArrayList<FinancialObjectModel>) : RecyclerView.Adapter<SavingsAdapter.MyViewHolder>() {
 
     private lateinit var mListener : onItemClickListener
 
@@ -30,14 +32,14 @@ class SavingsAdapter(private val savingsList : ArrayList<SavingsModel>) : Recycl
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
         val currentItem = savingsList[position]
-        holder.tvSavingsTitle.setText(currentItem.savingsName)
-        holder.tvSavingsAmount.setText(currentItem.savingsAmouunt)
-        holder.tvGoalAmount.setText(currentItem.savingsGoalAmount)
+        holder.tvSavingsTitle.text = currentItem.name
+        val savingsEarned = currentItem.valueAmount
+        val savingsGoal = currentItem.targetAmount
+        holder.tvSavingsAmount.text = prepareDoubleForPrint(savingsEarned)
+        holder.tvGoalAmount.text = prepareDoubleForPrint(savingsGoal)
 
-        val savingsEarned = BigDecimal(currentItem.savingsAmouunt.replace(",",""))
-        val savingsGoal = BigDecimal(currentItem.savingsGoalAmount.replace(",",""))
-
-        if(savingsGoal.compareTo(savingsEarned)!! <=0) {
+        //Check to see if goal is reached. if it is reached then checkmark will be visible.
+        if(savingsGoal<=savingsEarned) {
             holder.ivCompletedCheck.visibility = View.VISIBLE
         }
 

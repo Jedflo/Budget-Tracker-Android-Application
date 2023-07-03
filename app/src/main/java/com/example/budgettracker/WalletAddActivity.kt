@@ -10,13 +10,16 @@ import androidx.appcompat.app.AppCompatActivity
 import java.math.BigDecimal
 
 class WalletAddActivity : AppCompatActivity() {
+
     private lateinit var sqLiteHelper: SQLiteHelper
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_wallet_add)
         sqLiteHelper = SQLiteHelper(this)
 
         //Find views where we will get the data to create a wallet first
+        //TODO Move to initViews
         val bCreateWallet = findViewById<Button>(R.id.bWalletAddCreateWallet)
         val etWalletName = findViewById<EditText>(R.id.etWalletAddWalletName)
         val etWalletDescription = findViewById<EditText>(R.id.etWalletAddWalletDescription)

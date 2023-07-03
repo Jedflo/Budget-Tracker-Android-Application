@@ -10,14 +10,21 @@ import androidx.appcompat.app.AppCompatActivity
 import java.math.BigDecimal
 
 class SavingsAddActivity : AppCompatActivity() {
+
+    private lateinit var sqLiteHelper: SQLiteHelper
+    private lateinit var bCreateSavings: Button
+    private lateinit var etName: EditText
+    private lateinit var etDescription: EditText
+    private lateinit var etGoalAmount: EditText
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_savings)
 
-        val bCreateSavings = findViewById<Button>(R.id.bCreateSavings)
-        val etName = findViewById<EditText>(R.id.etName)
-        val etDescription = findViewById<EditText>(R.id.etDescription)
-        val etGoalAmount = findViewById<EditText>(R.id.etnGoalAmount)
+        //Fetch all views
+        initViews()
+        sqLiteHelper = SQLiteHelper(this)
+
         bCreateSavings.setOnClickListener {
             //On button Click, get the name, description, and goal amount of the savings object to be created.
             val newSavingsName = etName.text.toString()
@@ -42,31 +49,18 @@ class SavingsAddActivity : AppCompatActivity() {
                 builder.show()
                 return@setOnClickListener
             }
-            val newSavingsGoal = BigDecimal(etGoalAmount.text.toString())
+            val newSavingsGoal = etGoalAmount.text.toString().replace(",","").toDouble()
 
             //Create the savings object using the collected data above
-            val financialSavingsObject = FinancialSavings(
-                newSavingsName,
-                newSavingsDescription,
-                newSavingsStatus,
-                newSavingsGoal
+            val financialSavingsObject = FinancialObjectModel(
+                type = Const.FO_TYPE_SAVINGS,
+                name = newSavingsName,
+                description =  newSavingsDescription,
+                targetAmount = newSavingsGoal
             )
 
-            val financialSavingsObjectKey = financialSavingsObject.financialObjectID
-
-            //Load Main Financial Object to add the created savings object.
-            val mainFinancialObject = FileManager.loadFinancialObject(
-                applicationContext.filesDir.absolutePath,
-                Constants.SAVINGS_FILENAME
-            )
-            mainFinancialObject.savingsObjects.put(financialSavingsObjectKey, financialSavingsObject)
-
-            //Save object to android internal storage
-            FileManager.saveFinancialObject(
-                mainFinancialObject,
-                applicationContext.filesDir.absolutePath,
-                Constants.SAVINGS_FILENAME
-            )
+            val newSavingsId = financialSavingsObject.id
+            sqLiteHelper.insertFinancialObject(financialSavingsObject)
 
             //send toast to user which confirms that the file has been saved
             Toast.makeText(
@@ -75,15 +69,22 @@ class SavingsAddActivity : AppCompatActivity() {
                 Toast.LENGTH_SHORT
             ).show()
 
-//            val intent = Intent(applicationContext, MainActivity::class.java)
-//            intent.putExtra(Constants.INTENT_KEY_NAVIGATE_TO, Constants.NAVIGATE_TO_SAVINGS)
+
             val intent = Intent(applicationContext, MainSavingsActivity::class.java)
-            intent.putExtra("id", financialSavingsObjectKey)
+            intent.putExtra(Const.INTENT_KEY_SAVINGS_ID, newSavingsId)
             intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
             setResult(RESULT_OK)
             finish()
         }
 
+    }
+
+    private fun initViews() {
+        bCreateSavings = findViewById(R.id.bCreateSavings)
+        etName = findViewById(R.id.etName)
+        etDescription = findViewById(R.id.etDescription)
+        etGoalAmount = findViewById(R.id.etnGoalAmount)
+        etGoalAmount.addTextChangedListener(NumberTextWatcher(etGoalAmount))
     }
 }

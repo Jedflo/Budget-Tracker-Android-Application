@@ -69,12 +69,13 @@ class WalletCreateTransactionActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            if (StringTools.isNullOrEmpty(etWalletTransactionAmount.text.toString().replace(",",""))){
+            if (StringTools.isNullOrEmpty(etWalletTransactionAmount.text.toString()
+                    .replace(",",""))){
                 builder.setTitle("Transaction's Amount must not be blank")
                 builder.show()
                 return@setOnClickListener
             }
-
+            //============Validations============//
             //After validation, get wallet transaction data from edit texts in view.
             val transactionName: String = etWalletTransactionName.text.toString()
             val transactionAmount: Double = etWalletTransactionAmount.text.toString()
@@ -95,23 +96,21 @@ class WalletCreateTransactionActivity : AppCompatActivity() {
             //Add Transaction
             if (transactionType.equals(Const.INTENT_VALUE_ADD_TRANSACTION)){
                 val transactionId = generateAlphaNumericId(16)
-                val transactionDate = Calendar.getInstance()
                 val newTransaction = FinancialObjectTransactionModel(
                     transactionId,
                     transactionName,
                     transactionAmount,
                     walletId,
-                    transactionDate,
+                    Calendar.getInstance(),
                     Const.ATTCH_NONE
                 )
 
                 sqlLiteHelper.insertFinancialObjectTransaction(newTransaction)
-
             }
 
             //Subtract Transaction
             if(transactionType.equals(Const.INTENT_VALUE_SUB_TRANSACTION)){
-                Log.d("condition", "${wallet.valueAmount} : $transactionAmount")
+
                 if (wallet.valueAmount < transactionAmount){
                     Toast.makeText(
                         this,
@@ -122,13 +121,12 @@ class WalletCreateTransactionActivity : AppCompatActivity() {
                 }
 
                 val transactionId = generateAlphaNumericId(16)
-                val transactionDate = Calendar.getInstance()
                 val newTransaction = FinancialObjectTransactionModel(
                     transactionId,
                     transactionName,
                     -transactionAmount,//negated because transaction is subtraction.
                     walletId,
-                    transactionDate,
+                    Calendar.getInstance(),
                     Const.ATTCH_NONE
                 )
 
@@ -153,16 +151,5 @@ class WalletCreateTransactionActivity : AppCompatActivity() {
         bWalletCreateTransaction = findViewById(R.id.bWalletCreateTransaction)
     }
 
-    /**
-     * Generates an ID with length idSize. ID generated is alphanumeric
-     * @param source What numbers, letters, and symbols the ID can be composed of.
-     * @param idSize Length of ID to be generated.
-     * @return generated ID.
-     */
-    fun generateAlphaNumericId(idSize: Long): String{
-        val source = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-        val out = java.util.Random().ints(idSize, 0, source.length)
-            .asSequence().map(source::get).joinToString("")
-        return out
-    }
+
 }
