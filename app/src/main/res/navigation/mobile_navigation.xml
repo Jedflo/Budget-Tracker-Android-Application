@@ -50,9 +50,9 @@
     />
     <fragment
         android:id="@+id/borrowedFragment"
-        android:name="com.example.budgettracker.ui.borrowed.BorrowedFragment"
+        android:name="com.example.budgettracker.ui.lend.LendFragment"
         android:label="fragment_borrowed"
-        tools:layout="@layout/fragment_borrowed" />
+        tools:layout="@layout/fragment_lend" />
 
 
 </navigation>
