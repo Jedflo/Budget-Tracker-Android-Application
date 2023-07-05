@@ -19,12 +19,10 @@ import java.math.BigDecimal
 
 class NotificationsFragment : Fragment() {
 
+    private lateinit var sqLiteHelper: SQLiteHelper
     private lateinit var debtAdapter: DebtAdapter
     private lateinit var debtRecyclerView: RecyclerView
-    private lateinit var debtList: ArrayList<DebtModel>
-    lateinit var debtTitles: ArrayList<String>
-    lateinit var debtAmount: ArrayList<BigDecimal>
-
+    private lateinit var debtList: ArrayList<FinancialObjectModel>
     private var _binding: FragmentNotificationsBinding? = null
 
     // This property is only valid between onCreateView and
@@ -55,6 +53,9 @@ class NotificationsFragment : Fragment() {
 
         _binding = FragmentNotificationsBinding.inflate(inflater, container, false)
         val root: View = binding.root
+
+        //Set database access.
+        sqLiteHelper = SQLiteHelper(requireActivity().applicationContext)
 
         //Add Debt item
         val bAddDebtItem = root.findViewById<Button>(R.id.bAddDebt)
@@ -96,35 +97,17 @@ class NotificationsFragment : Fragment() {
         //Set on click listener on recycler view elements.
         debtAdapter.setOnItemClickListener(object : DebtAdapter.onItemClickListener{
             override fun onItemClick(position: Int) {
-                val clickedItem = debtList.get(position)
-                val debtId = clickedItem.DebtId
+                val clickedItem = debtList[position]
+                val debtId = clickedItem.id
                 val intent = Intent(context, MainDebtActivity::class.java)
-                intent.putExtra("debtId", debtId)
+                intent.putExtra(Const.INTENT_KEY_DEBT_ID, debtId)
                 activityResultLauncher.launch(intent)
             }
         })
     }
 
     private fun initializeDebtData(){
-        debtList = arrayListOf()
-
-        val mainFinancialObject: FinancialObject = FileManager.loadFinancialObject(
-            context?.filesDir?.absolutePath,
-            Constants.SAVINGS_FILENAME
-        )?: return
-
-        val debtMap: HashMap <String, FinancialDebt> = mainFinancialObject.debtObjects
-        val numberFormatter: NumberFormatter = NumberFormatter()
-        for (financialDebt in debtMap){
-            val debt = DebtModel(
-                financialDebt.value.financialObjectID,
-                financialDebt.value.name,
-                numberFormatter.formatNumber(financialDebt.value.amount),
-                numberFormatter.formatNumber(financialDebt.value.financialTransactionsTotal),
-                financialDebt.value.status
-            )
-            debtList.add(debt)
-        }
+        debtList = sqLiteHelper.getFinancialObjects(Const.FO_TYPE_DEBT)
     }
 
 
