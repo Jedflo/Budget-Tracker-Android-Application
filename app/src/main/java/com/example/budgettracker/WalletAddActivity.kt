@@ -11,18 +11,18 @@ import java.math.BigDecimal
 
 class WalletAddActivity : AppCompatActivity() {
 
+    private lateinit var bCreateWallet: Button
+    private lateinit var etWalletName: EditText
+    private lateinit var etWalletDescription: EditText
     private lateinit var sqLiteHelper: SQLiteHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_wallet_add)
-        sqLiteHelper = SQLiteHelper(this)
 
         //Find views where we will get the data to create a wallet first
-        //TODO Move to initViews
-        val bCreateWallet = findViewById<Button>(R.id.bWalletAddCreateWallet)
-        val etWalletName = findViewById<EditText>(R.id.etWalletAddWalletName)
-        val etWalletDescription = findViewById<EditText>(R.id.etWalletAddWalletDescription)
+        initViews()
+        sqLiteHelper = SQLiteHelper(this)
 
         bCreateWallet.setOnClickListener {
             //On button click, get the name and description of wallet to be created.
@@ -67,5 +67,11 @@ class WalletAddActivity : AppCompatActivity() {
 
         }
 
+    }
+
+    private fun initViews() {
+        bCreateWallet = findViewById(R.id.bWalletAddCreateWallet)
+        etWalletName = findViewById(R.id.etWalletAddWalletName)
+        etWalletDescription = findViewById(R.id.etWalletAddWalletDescription)
     }
 }
