@@ -230,7 +230,7 @@ class SQLiteHelper(context: Context): SQLiteOpenHelper(context, DATABASE_NAME, n
      * @param foID Financial Object ID of financial object to be fetched.
      * @return FinancialObjectModel with the given FO ID.
      */
-    @SuppressLint("Range")
+    @SuppressLint("Range", "Recycle")
     fun getFinancialObject(foID: String): FinancialObjectModel? {
         val db = this.writableDatabase
         val selectQuery = "SELECT * FROM $TBL_FINANCIAL_OBJECT WHERE $FO_ID = '$foID'"
