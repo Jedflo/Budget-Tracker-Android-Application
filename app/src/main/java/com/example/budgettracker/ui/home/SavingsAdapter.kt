@@ -9,7 +9,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.budgettracker.FinancialObjectModel
 import com.example.budgettracker.R
 import com.example.budgettracker.prepareDoubleForPrint
-import java.math.BigDecimal
 
 class SavingsAdapter(private val savingsList : ArrayList<FinancialObjectModel>) : RecyclerView.Adapter<SavingsAdapter.MyViewHolder>() {
 
@@ -39,7 +38,7 @@ class SavingsAdapter(private val savingsList : ArrayList<FinancialObjectModel>) 
         holder.tvGoalAmount.text = prepareDoubleForPrint(savingsGoal)
 
         //Check to see if goal is reached. if it is reached then checkmark will be visible.
-        if(savingsGoal<=savingsEarned) {
+        if(savingsGoal <= savingsEarned) {
             holder.ivCompletedCheck.visibility = View.VISIBLE
         }
 
@@ -50,9 +49,9 @@ class SavingsAdapter(private val savingsList : ArrayList<FinancialObjectModel>) 
     }
 
     class MyViewHolder(itemView: View, listener : onItemClickListener) : RecyclerView.ViewHolder(itemView){
-        val tvSavingsTitle: TextView = itemView.findViewById(R.id.tvSavingsTitle)
-        val tvSavingsAmount: TextView = itemView.findViewById(R.id.tvSavingsAmount)
-        val tvGoalAmount: TextView = itemView.findViewById(R.id.tvGoalAmountRV)
+        val tvSavingsTitle: TextView = itemView.findViewById(R.id.tvLendTitle)
+        val tvSavingsAmount: TextView = itemView.findViewById(R.id.tvLentAmount)
+        val tvGoalAmount: TextView = itemView.findViewById(R.id.tvGoalAmountLent)
         val ivCompletedCheck: ImageView = itemView.findViewById(R.id.ivCompletedCheck)
 
 

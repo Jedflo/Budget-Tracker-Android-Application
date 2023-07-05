@@ -12,15 +12,17 @@ import java.math.BigDecimal
 import java.util.*
 
 class SavingsCreateTransactionActivity : AppCompatActivity() {
+
     private lateinit var etSavingsTransactionName: EditText
     private lateinit var etSavingsTransactionAmount: EditText
     private lateinit var bSavingsCreateTransaction: Button
     private lateinit var sqLiteHelper: SQLiteHelper
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_savings_create_transaction)
+
+        //Initiate all views.
         initViews()
         sqLiteHelper = SQLiteHelper(this)
 
@@ -35,6 +37,7 @@ class SavingsCreateTransactionActivity : AppCompatActivity() {
         val transactionType = bundle!!.getString(Const.INTENT_KEY_TRANSACTION_TYPE)
         val savingsId = bundle!!.getString(Const.INTENT_KEY_SAVINGS_ID)
 
+        //Message if no savings id is retrieved from bundle.
         if (savingsId.isNullOrEmpty()){
             val builder = AlertDialog.Builder(this)
             builder.setPositiveButton("OK"){dialog, which ->
@@ -47,7 +50,7 @@ class SavingsCreateTransactionActivity : AppCompatActivity() {
         }
 
         //Setting Title
-        val title = if (transactionType.equals("add")) "Add Transaction"
+        val title = if (transactionType.equals(Const.INTENT_VALUE_ADD_TRANSACTION)) "Add Transaction"
         else "Subtract Transaction"
         setTitle(title)
 
@@ -79,9 +82,9 @@ class SavingsCreateTransactionActivity : AppCompatActivity() {
             var transactionAmount:Double = etSavingsTransactionAmount.text.toString()
                 .replace(",","").toDouble()
 
-            //Check if wallet ID is an actual Financial Object within the database.
-            val savings = sqLiteHelper.getFinancialObject(savingsId!!)
-            if(savings==null){
+            //Check if savings ID is an actual Financial Object within the database.
+            val userSavings = sqLiteHelper.getFinancialObject(savingsId!!)
+            if(userSavings==null){
                 Toast.makeText(
                     this,
                     "An Error Occurred: wallet ID: $savingsId Does Not Exist",
@@ -90,22 +93,9 @@ class SavingsCreateTransactionActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            //Retrieve the financial savings object where the new to be created transaction will be linked to.
-            val fo: FinancialObject = FileManager.loadFinancialObject(applicationContext.filesDir.absolutePath,Constants.SAVINGS_FILENAME)
-            val userSavings = sqLiteHelper.getFinancialObject(savingsId!!)
-
-            if (userSavings==null){
-                Toast.makeText(
-                    this,
-                    "An Error Occurred: Savings ID: " + savingsId + "Does not exist",
-                    Toast.LENGTH_SHORT
-                ).show()
-                return@setOnClickListener
-            }
-
+            val transactionId = generateAlphaNumericId(16)
             //Add Transaction
             if (transactionType.equals(Const.INTENT_VALUE_ADD_TRANSACTION)){
-                val transactionId = generateAlphaNumericId(16)
 
                 val newTransaction = FinancialObjectTransactionModel(
                     transactionId,
@@ -121,7 +111,6 @@ class SavingsCreateTransactionActivity : AppCompatActivity() {
 
             //Subtract Transaction
             if (transactionType.equals(Const.INTENT_VALUE_SUB_TRANSACTION)){
-
                 if(userSavings.valueAmount < transactionAmount){
                     Toast.makeText(
                         this,
@@ -130,7 +119,7 @@ class SavingsCreateTransactionActivity : AppCompatActivity() {
                     ).show()
                     return@setOnClickListener
                 }
-                val transactionId = generateAlphaNumericId(16)
+
                 val newTransaction = FinancialObjectTransactionModel(
                     transactionId,
                     transactionName,

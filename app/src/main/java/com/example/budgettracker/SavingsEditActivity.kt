@@ -98,11 +98,9 @@ class SavingsEditActivity : AppCompatActivity() {
                 "$savingsNameString Successfully Deleted",
                 Toast.LENGTH_SHORT
             ).show()
-
             setResult(RESULT_CANCELED)
             finish()
         }
-
 
         val ibSavingsEditDelete = findViewById<ImageButton>(R.id.ibEditSavingsDelete)
         ibSavingsEditDelete.setOnClickListener {

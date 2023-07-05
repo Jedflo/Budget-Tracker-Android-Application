@@ -7,7 +7,6 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import java.math.BigDecimal
 
 class SavingsAddActivity : AppCompatActivity() {
 
@@ -19,7 +18,7 @@ class SavingsAddActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_add_savings)
+        setContentView(R.layout.activity_savings_add)
 
         //Fetch all views
         initViews()
@@ -29,11 +28,9 @@ class SavingsAddActivity : AppCompatActivity() {
             //On button Click, get the name, description, and goal amount of the savings object to be created.
             val newSavingsName = etName.text.toString()
             val newSavingsDescription = etDescription.text.toString()
-            val newSavingsStatus = "Incomplete"
-
             //Validations
+            //Setting up the Alert dialog which will serve as error popup for validation.
             val builder = AlertDialog.Builder(this)
-
             builder.setPositiveButton("OK") { dialog, which ->
                 dialog.dismiss()
             }
@@ -60,9 +57,10 @@ class SavingsAddActivity : AppCompatActivity() {
             )
 
             val newSavingsId = financialSavingsObject.id
+            //Add new object to database.
             sqLiteHelper.insertFinancialObject(financialSavingsObject)
 
-            //send toast to user which confirms that the file has been saved
+            //Send toast to user which confirms that the file has been saved.
             Toast.makeText(
                 this,
                 "$newSavingsName, $newSavingsDescription, $newSavingsGoal",
@@ -81,10 +79,10 @@ class SavingsAddActivity : AppCompatActivity() {
     }
 
     private fun initViews() {
-        bCreateSavings = findViewById(R.id.bCreateSavings)
-        etName = findViewById(R.id.etName)
-        etDescription = findViewById(R.id.etDescription)
-        etGoalAmount = findViewById(R.id.etnGoalAmount)
+        bCreateSavings = findViewById(R.id.bCreateLend)
+        etName = findViewById(R.id.etLendName)
+        etDescription = findViewById(R.id.etLendDescription)
+        etGoalAmount = findViewById(R.id.etAddLendAmount)
         etGoalAmount.addTextChangedListener(NumberTextWatcher(etGoalAmount))
     }
 }
